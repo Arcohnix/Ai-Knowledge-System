@@ -1,0 +1,150 @@
+{
+  "name": "enterprise_knowledge_benchmark",
+  "version": "1.0.0",
+  "description": "Benchmark dataset assessing reliability, hallucination resistance, citations, versioning, and contradictions.",
+  "examples": [
+    {
+      "id": "eval-001",
+      "question": "How many peer approvals are required for pull requests before merging?",
+      "category": "straightforward",
+      "is_answerable": true,
+      "expected_answer": "All pull requests must have at least two peer approvals before merging.",
+      "expected_relevant_documents": ["sample.txt"],
+      "expected_relevant_chunks": [
+        "All pull requests must have at least two peer approvals before merging."
+      ],
+      "expected_behavior": "answer_with_citations",
+      "metadata": { "domain": "engineering" }
+    },
+    {
+      "id": "eval-002",
+      "question": "What authentication protocol is required for incoming network traffic?",
+      "category": "straightforward",
+      "is_answerable": true,
+      "expected_answer": "All incoming network traffic must authenticate via mutual TLS.",
+      "expected_relevant_documents": ["sample.md"],
+      "expected_relevant_chunks": [
+        "All incoming network traffic must authenticate via mutual TLS."
+      ],
+      "expected_behavior": "answer_with_citations",
+      "metadata": { "domain": "security" }
+    },
+    {
+      "id": "eval-003",
+      "question": "How long must customer personal identification data be retained under company policy?",
+      "category": "straightforward",
+      "is_answerable": true,
+      "expected_answer": "Customer personal identification data must be retained for at least 7 years pursuant to regulatory requirements.",
+      "expected_relevant_documents": ["sample.docx"],
+      "expected_relevant_chunks": [
+        "Customer personal identification data must be retained for at least 7 years pursuant to regulatory requirements."
+      ],
+      "expected_behavior": "answer_with_citations",
+      "metadata": { "domain": "compliance" }
+    },
+    {
+      "id": "eval-004",
+      "question": "How often are employees required to complete ethics certification?",
+      "category": "straightforward",
+      "is_answerable": true,
+      "expected_answer": "All employees must complete mandatory ethics certification annually.",
+      "expected_relevant_documents": ["sample.pdf"],
+      "expected_relevant_chunks": [
+        "All employees must complete mandatory ethics certification annually."
+      ],
+      "expected_behavior": "answer_with_citations",
+      "metadata": { "domain": "compliance" }
+    },
+    {
+      "id": "eval-005",
+      "question": "On which days are production deployments permitted, and what is the rule regarding API keys or database credentials in source code?",
+      "category": "multi_document",
+      "is_answerable": true,
+      "expected_answer": "Production deployments are permitted Tuesday through Thursday according to the operations manual, and no API keys or database credentials may be stored in source code according to security architecture.",
+      "expected_relevant_documents": ["sample.txt", "sample.md"],
+      "expected_relevant_chunks": [
+        "Production deployments are permitted Tuesday through Thursday.",
+        "No API keys or database credentials may be stored in source code."
+      ],
+      "expected_behavior": "answer_with_citations",
+      "metadata": { "domain": "engineering_and_security" }
+    },
+    {
+      "id": "eval-006",
+      "question": "What is mandatory regarding ethics training, and where must financial transaction ledgers be stored?",
+      "category": "multi_document",
+      "is_answerable": true,
+      "expected_answer": "All employees must complete mandatory ethics certification annually, and financial transaction ledgers must be archived in immutable storage.",
+      "expected_relevant_documents": ["sample.pdf", "sample.docx"],
+      "expected_relevant_chunks": [
+        "All employees must complete mandatory ethics certification annually.",
+        "Financial transaction ledgers must be archived in immutable storage."
+      ],
+      "expected_behavior": "answer_with_citations",
+      "metadata": { "domain": "compliance_and_finance" }
+    },
+    {
+      "id": "eval-007",
+      "question": "What is the company policy regarding bringing dogs or personal pets to the office?",
+      "category": "unsupported",
+      "is_answerable": false,
+      "expected_answer": "I couldn't find sufficient information in the available knowledge base to answer this question reliably.",
+      "expected_relevant_documents": [],
+      "expected_relevant_chunks": [],
+      "expected_behavior": "refuse_insufficient_evidence",
+      "metadata": { "domain": "office_policy" }
+    },
+    {
+      "id": "eval-008",
+      "question": "What is the guest Wi-Fi network password in the main headquarters building?",
+      "category": "unsupported",
+      "is_answerable": false,
+      "expected_answer": "I couldn't find sufficient information in the available knowledge base to answer this question reliably.",
+      "expected_relevant_documents": [],
+      "expected_relevant_chunks": [],
+      "expected_behavior": "refuse_insufficient_evidence",
+      "metadata": { "domain": "it_support" }
+    },
+    {
+      "id": "eval-009",
+      "question": "Can I deploy code to production right now?",
+      "category": "ambiguous",
+      "is_answerable": true,
+      "expected_answer": "Production deployments are only permitted Tuesday through Thursday, and pull requests must have at least two peer approvals prior to merging.",
+      "expected_relevant_documents": ["sample.txt"],
+      "expected_relevant_chunks": [
+        "Production deployments are permitted Tuesday through Thursday.",
+        "All pull requests must have at least two peer approvals before merging."
+      ],
+      "expected_behavior": "answer_with_citations",
+      "metadata": { "domain": "engineering" }
+    },
+    {
+      "id": "eval-010",
+      "question": "How many annual vacation days do employees receive under the current active corporate vacation policy?",
+      "category": "versioning",
+      "is_answerable": true,
+      "expected_answer": "Under the active Corporate Vacation Policy (version 2026.1), employees receive 25 annual vacation days upon hiring, superseding the previous 2024 policy which granted 20 days.",
+      "expected_relevant_documents": ["policy_2026.txt"],
+      "expected_relevant_chunks": [
+        "Corporate Vacation Policy. Employees receive 25 annual vacation days upon hiring."
+      ],
+      "expected_behavior": "resolve_superseded_version",
+      "metadata": { "version_conflict": "2024.1 vs 2026.1" }
+    },
+    {
+      "id": "eval-011",
+      "question": "What is the standard annual vacation entitlement across company departments?",
+      "category": "contradiction",
+      "is_answerable": false,
+      "expected_answer": "I found conflicting information in the knowledge base and cannot determine which policy is currently authoritative.",
+      "expected_relevant_documents": ["vacation_hr.txt", "vacation_eng.txt"],
+      "expected_relevant_chunks": [
+        "HR Department Standard. All employees are entitled to 20 vacation days annually.",
+        "Engineering Department Standard. All employees are entitled to 25 vacation days annually."
+      ],
+      "expected_behavior": "refuse_conflicting_evidence",
+      "metadata": { "conflict_type": "hr_vs_eng_vacation" }
+    }
+  ]
+}

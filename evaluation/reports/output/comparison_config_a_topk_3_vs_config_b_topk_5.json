@@ -1,0 +1,51 @@
+{
+  "config_a_name": "Config_A_TopK_3",
+  "config_b_name": "Config_B_TopK_5",
+  "retrieval_config_a": {
+    "top_k": 3,
+    "similarity_threshold": 0.35
+  },
+  "retrieval_config_b": {
+    "top_k": 5,
+    "similarity_threshold": 0.35
+  },
+  "metric_deltas": {
+    "answer_relevancy": {
+      "metric_name": "answer_relevancy",
+      "config_a_score": 0.8455,
+      "config_b_score": 0.7699,
+      "delta": -0.0756,
+      "percentage_change": -8.94
+    },
+    "context_precision": {
+      "metric_name": "context_precision",
+      "config_a_score": 0.6364,
+      "config_b_score": 0.9091,
+      "delta": 0.2727,
+      "percentage_change": 42.85
+    },
+    "context_recall": {
+      "metric_name": "context_recall",
+      "config_a_score": 0.6364,
+      "config_b_score": 0.7727,
+      "delta": 0.1363,
+      "percentage_change": 21.42
+    },
+    "faithfulness": {
+      "metric_name": "faithfulness",
+      "config_a_score": 1.0,
+      "config_b_score": 0.7273,
+      "delta": -0.2727,
+      "percentage_change": -27.27
+    }
+  },
+  "avg_latency_a": 4.208,
+  "avg_latency_b": 1.755,
+  "latency_delta_seconds": -2.453,
+  "key_findings": [
+    "Increasing retrieval depth to 5 improved Context Recall by +13.6%, capturing more multi-document evidence.",
+    "Context Precision improved by +27.3% under Config_B_TopK_5.",
+    "Faithfulness decreased slightly by -27.3% under larger context.",
+    "Latency impact: Configuration B average latency changed by -2.453s per query."
+  ]
+}

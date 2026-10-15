@@ -13,11 +13,11 @@ An internal enterprise knowledge assistant designed to answer questions reliably
 ## Project Status: Phase 7 (Contradictory Knowledge and Document Version Handling)
 
 > [!NOTE]
-> This repository is currently on **Phase 7: Contradictory Knowledge and Document Version Handling**.
+> This repository is currently on **Phase 8: Automated RAG Evaluation using Ragas**.
 >
-> The system detects potentially contradictory retrieved evidence (`AGREE`, `PARTIALLY_CONFLICT`, `CONFLICT`), supports document lifecycle versioning (`ACTIVE`, `SUPERSEDED`, `EXPIRED`, `effective_date`, `expiration_date`), and implements deterministic conflict resolution rules (status precedence, temporal validity, and version precedence).
+> The system incorporates an objective, automated evaluation harness (`python -m evaluation.run`) assessing RAG quality across 4 core metrics: **Faithfulness**, **Answer Relevancy**, **Context Precision@K**, and **Context Recall**.
 >
-> **Critical Governance Guarantee**: The system **never** silently chooses one contradictory document merely because it has a higher vector similarity score. If a direct contradiction cannot be safely resolved, it explicitly alerts the user with `"I found conflicting information in the knowledge base and cannot determine which policy is currently authoritative."` while surfacing the competing sources for auditability.
+> Rather than relying on manual checks, the benchmark systematically tests 6 query archetypes (straightforward, multi-document, unsupported, ambiguous, versioned, and contradictory knowledge) and runs comparative experiments between retrieval configurations (e.g., `top_k = 3` vs. `top_k = 5`).
 
 ---
 
@@ -39,7 +39,7 @@ An internal enterprise knowledge assistant designed to answer questions reliably
 - **Provider-Agnostic LLM Interface**: Local Ollama (`llama3:latest`), OpenAI-compatible remote gateways, and Mock testing providers.
 - **Dense Vector Search**: PostgreSQL + `pgvector` with HNSW indexing and FastEmbed ONNX local models.
 - **Multi-Format Ingestion**: Native parsing for PDF, DOCX, TXT, and Markdown with SHA-256 deduplication.
-- **Comprehensive Pytest Suite**: 115 unit, integration, adversarial, and contradiction tests passing both on host and in Docker container.
+- **Comprehensive Pytest Suite**: 123 unit, integration, adversarial, contradiction, and evaluation tests passing both on host and in Docker container.
 
 ---
 
@@ -81,10 +81,16 @@ AiKnowledgeSystem/
 │   ├── observability/          # Tracing & telemetry
 │   │   └── telemetry.py        # RequestContextMiddleware (X-Request-ID, Timing)
 │   └── main.py                 # FastAPI application factory & lifespan
+├── evaluation/                 # Automated RAG evaluation harness
+│   ├── datasets/               # Benchmark dataset schemas & 11 test scenarios
+│   ├── metrics/                # Faithfulness, Relevancy, Context Precision/Recall
+│   ├── runners/                # EvaluationRunner & ExperimentComparator
+│   ├── reports/                # Markdown report generator & JSON persistence
+│   └── run.py                  # CLI evaluation runner (python -m evaluation.run)
 ├── tests/                      # Automated test suite
 │   ├── conftest.py             # Test fixtures & async client
-│   ├── unit/                   # Unit tests (config, abstractions, exceptions, repos)
-│   └── integration/            # Integration tests (health endpoint, middleware)
+│   ├── unit/                   # Unit tests (config, abstractions, exceptions, repos, eval)
+│   └── integration/            # Integration tests (health, search, ask, contradictions, eval)
 ├── scripts/                    # Automation scripts
 │   ├── init_db.py              # Database connection retry & schema sync
 │   └── run_dev.sh              # Local development runner
@@ -94,7 +100,9 @@ AiKnowledgeSystem/
 ├── alembic/                    # Database migrations
 ├── docs/                       # Architecture & development documentation
 │   ├── ARCHITECTURE.md         # Design decisions and subsystem rationale
-│   └── DEVELOPMENT.md          # Developer onboarding & guides
+│   ├── DEVELOPMENT.md          # Developer onboarding & guides
+│   ├── CONTRADICTION_AND_VERSIONING.md # Phase 7 contradiction handling
+│   └── RAG_EVALUATION.md       # Phase 8 automated evaluation guide
 ├── docker-compose.yml          # Container orchestration (PostgreSQL + FastAPI)
 ├── .env.example                # Environment variable template
 └── pyproject.toml              # Project metadata & pytest configuration
