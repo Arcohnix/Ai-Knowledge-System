@@ -24,6 +24,7 @@ from app.schemas.ask import (
     AskSource,
     AskSourceChunk,
     AskSourceDocument,
+    ReliabilityReport,
     SourceCitation,
 )
 
@@ -49,4 +50,5 @@ __all__ = [
     "AskSourceChunk",
     "AskSourceDocument",
     "SourceCitation",
+    "ReliabilityReport",
 ]

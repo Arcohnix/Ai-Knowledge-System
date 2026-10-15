@@ -10,29 +10,35 @@ An internal enterprise knowledge assistant designed to answer questions reliably
 
 ---
 
-## Project Status: Phase 5 (Evidence-Based Answering and Source Citations)
+## Project Status: Phase 6 (Answer Reliability and Hallucination Detection)
 
 > [!NOTE]
-> This repository is currently on **Phase 5: Evidence-Based Answering and Source Citations**.
+> This repository is currently on **Phase 6: Answer Reliability and Hallucination Detection**.
 >
-> Every factual answer is rigorously grounded and traceable directly to retrieved knowledge chunks. The API returns structured source citations (`document`, `version`, `chunk_id`, `score`, and `excerpt`), a mathematically derived confidence score (`high`, `medium`, `low`, `none`), and machine-readable refusal codes (`INSUFFICIENT_EVIDENCE`) when evidence is absent or insufficient.
+> The system replaces naive RAG with a multi-stage audited verification pipeline:
+> `Question -> Retrieval -> EvidenceEvaluator (Pre-gen Gate) -> LLM -> AnswerVerifier (Post-gen Audit) -> ReliabilityDecisionEngine (Accept / Regenerate / Refuse) -> Audited Final Answer`.
+>
+> It detects ungrounded claims, catches numeric and conceptual hallucinations, attempts corrective regeneration with negative constraints, and prefers refusing with `"I don't have enough reliable information to answer this."` over outputting a plausible hallucination.
 
 ---
 
 ## Key Features
 
+- **Multi-Stage Reliability Pipeline**: Full verification lifecycle featuring `EvidenceEvaluator`, `AnswerVerifier`, and `ReliabilityDecisionEngine`.
+- **Pre-Generation Evidence Gating**: Inspects retrieval density, similarity thresholds, and query keyword coverage before invoking LLM generation, short-circuiting unsupported queries to `INSUFFICIENT_EVIDENCE`.
+- **Post-Generation Claim Verification**: Decomposes answers into discrete factual claims and checks quantitative, numeric, and conceptual alignment against source documents.
+- **Audited Faithfulness Score**: True mathematical fraction of supported claims ($0.0$ to $1.0$) rather than heuristic or random confidence numbers.
+- **Corrective Regeneration Loop**: When unverified assertions are detected, the system attempts corrective regeneration with explicit negative boundaries before falling back to refusal.
+- **Explicit Hallucination Refusal**: Strictly prefers `"I don't have enough reliable information to answer this."` with refusal reason `UNVERIFIED_CLAIMS` when evidence is inadequate.
 - **Traceable Source Citations**: Every answer references exact source chunks with `document` name, `version`, `chunk_id`, `score`, and concise relevant `excerpt`.
 - **Explainable Confidence Scoring**: Fully deterministic, mathematically documented confidence engine combining top similarity ($w_1=0.50$), mean cluster strength ($w_2=0.30$), and lexical keyword coverage ($w_3=0.20$).
-- **Insufficient Evidence Gating**: Two-tiered protection preventing hallucinations on ungrounded questions:
-  - Short-circuits pre-generation if retrieval yields 0 chunks or low similarity.
-  - Automatically zero-sources and returns `INSUFFICIENT_EVIDENCE` with controlled refusal on unanswerable questions.
 - **Provider-Agnostic LLM Interface**: Local Ollama (`llama3:latest`), OpenAI-compatible remote gateways, and Mock testing providers.
-- **Strict Grounding Prompts**: System instructions forbidding external assumptions and demanding citations.
 - **Dense Vector Search**: PostgreSQL + `pgvector` with HNSW indexing and FastEmbed ONNX local models.
 - **Multi-Format Ingestion**: Native parsing for PDF, DOCX, TXT, and Markdown with SHA-256 deduplication.
-- **Comprehensive Pytest Suite**: 76 unit and integration tests passing both on host and in Docker container.
+- **Comprehensive Pytest Suite**: 100 unit and adversarial integration tests passing both on host and in Docker container.
 
 ---
+
 
 ## Architecture Overview
 

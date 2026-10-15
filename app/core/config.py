@@ -79,6 +79,15 @@ class Settings(BaseSettings):
     RAG_MAX_CONTEXT_CHARS: int = 8000
     RAG_EXCERPT_MAX_CHARS: int = 250
 
+    # Faithfulness Verification & Reliability (Phase 6)
+    RAG_FAITHFULNESS_THRESHOLD: float = 0.80
+    RAG_MAX_REGENERATION_ATTEMPTS: int = 1
+    RAG_UNVERIFIED_REFUSAL_RESPONSE: str = (
+        "I don't have enough reliable information to answer this."
+    )
+    RAG_UNVERIFIED_REASON: str = "UNVERIFIED_CLAIMS"
+    RAG_ENABLE_REGENERATION: bool = True
+
     # CORS
     ALLOWED_ORIGINS: Union[List[str], str] = ["*"]
 

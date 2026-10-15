@@ -55,3 +55,35 @@ class LLMGenerationService:
                 f"Failed to generate answer from LLM: {str(exc)}",
                 details={"provider": self.provider.provider_name, "error": str(exc)},
             ) from exc
+
+    async def generate_correction(
+        self,
+        correction_prompt: str,
+        system_prompt: Optional[str] = None,
+    ) -> LLMResponse:
+        """
+        Generates an answer using a corrective prompt with negative constraints
+        aimed at recovering from unverified or hallucinated assertions.
+        """
+        sys_prompt = system_prompt or RAG_SYSTEM_PROMPT
+        logger.info(
+            f"Invoking LLM for corrective regeneration [{self.provider.provider_name}/{self.provider.model_name}]"
+        )
+        try:
+            response = await self.provider.agenerate(
+                prompt=correction_prompt,
+                system_prompt=sys_prompt,
+            )
+            logger.debug(
+                f"LLM generated correction {len(response.content)} chars (tokens: {response.token_usage})"
+            )
+            return response
+        except LLMGenerationError:
+            raise
+        except Exception as exc:
+            logger.error(f"Unexpected corrective generation error: {exc}")
+            raise LLMGenerationError(
+                f"Failed to generate corrective answer from LLM: {str(exc)}",
+                details={"provider": self.provider.provider_name, "error": str(exc)},
+            ) from exc
+

@@ -73,10 +73,43 @@ class SourceCitation(BaseModel):
     )
 
 
+class ReliabilityReport(BaseModel):
+    """
+    Encapsulates post-generation faithfulness verification and reliability decision.
+    Validates whether claims in the generated answer are grounded in retrieved evidence.
+    """
+
+    status: str = Field(
+        ...,
+        description="Reliability action: 'ACCEPT', 'REGENERATE', or 'REFUSE'",
+        examples=["ACCEPT", "REFUSE"],
+    )
+    faithfulness_score: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Fraction of claims in the answer verified as grounded in the retrieved context",
+        examples=[1.0, 0.0],
+    )
+    supported: bool = Field(
+        ...,
+        description="True if all claims are faithfully supported by evidence",
+    )
+    unsupported_claims: List[str] = Field(
+        default_factory=list,
+        description="List of factual claims that could not be verified against the context",
+    )
+    reason: str = Field(
+        ...,
+        description="Diagnostic explanation of the verification outcome",
+    )
+
+
 class AskResponse(BaseModel):
     """
     Unified question-answering response containing synthesized answer,
-    calculated confidence level, optional machine-readable refusal reason, and structured source citations.
+    calculated confidence level, optional machine-readable refusal reason, structured source citations,
+    and faithfulness reliability audit report.
     """
 
     question: str = Field(..., description="The original normalized question")
@@ -97,11 +130,15 @@ class AskResponse(BaseModel):
     reason: Optional[str] = Field(
         default=None,
         description="Machine-readable status code when question cannot be answered (e.g. 'INSUFFICIENT_EVIDENCE')",
-        examples=["INSUFFICIENT_EVIDENCE"],
+        examples=["INSUFFICIENT_EVIDENCE", "UNVERIFIED_CLAIMS"],
     )
     sources: List[SourceCitation] = Field(
         default_factory=list,
         description="Structured source citations used to generate the answer",
+    )
+    reliability: Optional[ReliabilityReport] = Field(
+        default=None,
+        description="Faithfulness verification and reliability decision report",
     )
     model_name: Optional[str] = Field(
         default=None,

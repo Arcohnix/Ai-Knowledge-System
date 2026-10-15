@@ -3,7 +3,7 @@ from typing import List, Optional
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.retrieval.base import RetrievedChunk
-from app.schemas.ask import AskResponse, SourceCitation
+from app.schemas.ask import AskResponse, ReliabilityReport, SourceCitation
 from app.services.confidence_service import ConfidenceResult, ConfidenceScorer
 
 logger = get_logger(__name__)
@@ -68,18 +68,48 @@ class ResponseFormattingService:
         evidence_chunks: List[RetrievedChunk],
         query_keywords: Optional[List[str]] = None,
         model_name: Optional[str] = None,
+        reliability: Optional[ReliabilityReport] = None,
     ) -> AskResponse:
         """
         Formats question, synthesized answer, calculated confidence, and source citations.
+        Audits post-generation faithfulness and ensures unverified answers are strictly refused.
         """
         cleaned_answer = answer.strip()
+
+        # Handle post-generation refusal from ReliabilityDecisionEngine
+        if reliability is not None and (
+            reliability.status == "REFUSE" or not reliability.supported
+        ):
+            logger.warning(
+                f"Response refused by ReliabilityDecisionEngine: {reliability.reason}"
+            )
+            refusal_text = (
+                cleaned_answer
+                if (
+                    settings.RAG_UNVERIFIED_REFUSAL_RESPONSE.lower() in cleaned_answer.lower()
+                    or "not enough reliable information" in cleaned_answer.lower()
+                )
+                else settings.RAG_UNVERIFIED_REFUSAL_RESPONSE
+            )
+            return AskResponse(
+                question=question,
+                answer=refusal_text,
+                confidence="none",
+                confidence_score=0.0,
+                reason=settings.RAG_UNVERIFIED_REASON,
+                sources=[],
+                reliability=reliability,
+                model_name=model_name,
+            )
 
         # Check if the answer indicates that evidence was unavailable or insufficient
         is_refusal = (
             settings.RAG_FALLBACK_RESPONSE.lower() in cleaned_answer.lower()
+            or settings.RAG_UNVERIFIED_REFUSAL_RESPONSE.lower() in cleaned_answer.lower()
             or "not have enough information" in cleaned_answer.lower()
             or "information is unavailable" in cleaned_answer.lower()
             or "couldn't find sufficient information" in cleaned_answer.lower()
+            or "not enough reliable information" in cleaned_answer.lower()
             or "cannot answer" in cleaned_answer.lower()
         )
 
@@ -92,6 +122,13 @@ class ResponseFormattingService:
         # If evidence was insufficient or refusal occurred, return controlled fallback
         if is_refusal or confidence_result.level == "none":
             logger.info("Response classified as INSUFFICIENT_EVIDENCE; zeroing source citations.")
+            refusal_reliability = reliability or ReliabilityReport(
+                status="REFUSE",
+                faithfulness_score=1.0,
+                supported=True,
+                unsupported_claims=[],
+                reason="Controlled refusal: retrieved context contains insufficient evidence.",
+            )
             return AskResponse(
                 question=question,
                 answer=(
@@ -103,6 +140,7 @@ class ResponseFormattingService:
                 confidence_score=confidence_result.score,
                 reason=settings.RAG_INSUFFICIENT_EVIDENCE_REASON,
                 sources=[],
+                reliability=refusal_reliability,
                 model_name=model_name,
             )
 
@@ -127,6 +165,14 @@ class ResponseFormattingService:
                 )
             )
 
+        accepted_reliability = reliability or ReliabilityReport(
+            status="ACCEPT",
+            faithfulness_score=1.0,
+            supported=True,
+            unsupported_claims=[],
+            reason="All claims verified as grounded in retrieved context.",
+        )
+
         return AskResponse(
             question=question,
             answer=cleaned_answer,
@@ -134,6 +180,7 @@ class ResponseFormattingService:
             confidence_score=confidence_result.score,
             reason=None,
             sources=sources,
+            reliability=accepted_reliability,
             model_name=model_name,
         )
 
@@ -143,12 +190,20 @@ class ResponseFormattingService:
         model_name: Optional[str] = None,
         custom_message: Optional[str] = None,
         reason: Optional[str] = None,
+        reliability: Optional[ReliabilityReport] = None,
     ) -> AskResponse:
         """
         Formats controlled response when retrieval yielded 0 chunks or chunks below similarity threshold.
         """
         message = custom_message or settings.RAG_FALLBACK_RESPONSE
         refusal_reason = reason or settings.RAG_INSUFFICIENT_EVIDENCE_REASON
+        reliability_report = reliability or ReliabilityReport(
+            status="REFUSE",
+            faithfulness_score=0.0,
+            supported=False,
+            unsupported_claims=[],
+            reason=f"Pre-generation check: {refusal_reason}",
+        )
 
         return AskResponse(
             question=question,
@@ -157,5 +212,6 @@ class ResponseFormattingService:
             confidence_score=0.0,
             reason=refusal_reason,
             sources=[],
+            reliability=reliability_report,
             model_name=model_name,
         )

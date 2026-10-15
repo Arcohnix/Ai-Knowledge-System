@@ -2,10 +2,13 @@ from typing import Any, Dict, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.logging import get_logger
+from app.evaluation.answer_verifier import AnswerVerifier
+from app.evaluation.evidence_evaluator import EvidenceEvaluator
+from app.evaluation.reliability_engine import DecisionAction, ReliabilityDecisionEngine
 from app.generation.base import BaseLLMProvider
 from app.generation.factory import get_llm_provider
 from app.ingestion.base import BaseEmbedder
-from app.schemas.ask import AskResponse
+from app.schemas.ask import AskResponse, ReliabilityReport
 from app.services.context_service import ContextConstructionService
 from app.services.generation_service import LLMGenerationService
 from app.services.query_service import QueryProcessingService
@@ -17,9 +20,10 @@ logger = get_logger(__name__)
 
 class RAGService:
     """
-    Coordinator service orchestrating the end-to-end question answering pipeline:
-    Query Processing -> Evidence Retrieval -> Context Construction -> LLM Generation -> Response Formatting.
-    Keeps API controllers lightweight and decoupled.
+    Coordinator service orchestrating the multi-stage reliable question answering pipeline:
+    Query Processing -> Evidence Retrieval -> Evidence Sufficiency Evaluation -> Context Construction
+    -> LLM Generation -> Faithfulness Verification -> Reliability Decision (Accept/Regenerate/Refuse)
+    -> Audited Response Formatting.
     """
 
     def __init__(
@@ -32,6 +36,9 @@ class RAGService:
         response_formatter: Optional[ResponseFormattingService] = None,
         embedder: Optional[BaseEmbedder] = None,
         llm_provider: Optional[BaseLLMProvider] = None,
+        evidence_evaluator: Optional[EvidenceEvaluator] = None,
+        answer_verifier: Optional[AnswerVerifier] = None,
+        reliability_engine: Optional[ReliabilityDecisionEngine] = None,
     ):
         self.session = session
         self.query_processor = query_processor or QueryProcessingService()
@@ -46,6 +53,11 @@ class RAGService:
         self.response_formatter = (
             response_formatter or ResponseFormattingService()
         )
+        self.evidence_evaluator = evidence_evaluator or EvidenceEvaluator()
+        self.answer_verifier = answer_verifier or AnswerVerifier()
+        self.reliability_engine = (
+            reliability_engine or ReliabilityDecisionEngine()
+        )
 
     async def answer_question(
         self,
@@ -55,7 +67,8 @@ class RAGService:
         filters: Optional[Dict[str, Any]] = None,
     ) -> AskResponse:
         """
-        Executes the full RAG pipeline for a given user question.
+        Executes the full RAG pipeline for a given user question with pre-generation
+        evidence evaluation and post-generation faithfulness verification.
         """
         k = top_k or settings.RAG_DEFAULT_TOP_K
         threshold = (
@@ -79,35 +92,117 @@ class RAGService:
             filters=filters,
         )
 
-        # If no relevant chunks meet the similarity threshold
-        if not retrieved_chunks:
-            logger.info("No evidence chunks found meeting similarity criteria; returning fallback response.")
+        # Step 3: Evidence Sufficiency Evaluation (Pre-generation check)
+        sufficiency = self.evidence_evaluator.evaluate_sufficiency(
+            retrieved_chunks=retrieved_chunks,
+            query_keywords=processed_query.keywords,
+            min_similarity_threshold=threshold,
+        )
+
+        if not sufficiency.is_sufficient:
+            logger.info(
+                f"Evidence sufficiency check failed: reason={sufficiency.reason}, details={sufficiency.details}"
+            )
+            reliability_report = ReliabilityReport(
+                status=DecisionAction.REFUSE.value,
+                faithfulness_score=0.0,
+                supported=False,
+                unsupported_claims=[],
+                reason=f"Pre-generation check: {sufficiency.reason} ({sufficiency.details.get('failure_stage', 'inadequate_evidence')})",
+            )
             return self.response_formatter.format_no_context_response(
                 question=processed_query.cleaned_query,
                 model_name=self.llm_provider.model_name,
+                custom_message=settings.RAG_FALLBACK_RESPONSE,
+                reason=sufficiency.reason or settings.RAG_INSUFFICIENT_EVIDENCE_REASON,
+                reliability=reliability_report,
             )
 
-        # Step 3: Context Construction
+        # Step 4: Context Construction
         context = self.context_builder.build_context(retrieved_chunks)
 
         if not context.has_context:
             logger.info("Context builder produced empty context; returning fallback response.")
+            reliability_report = ReliabilityReport(
+                status=DecisionAction.REFUSE.value,
+                faithfulness_score=0.0,
+                supported=False,
+                unsupported_claims=[],
+                reason="Context construction yielded empty context.",
+            )
             return self.response_formatter.format_no_context_response(
                 question=processed_query.cleaned_query,
                 model_name=self.llm_provider.model_name,
+                custom_message=settings.RAG_FALLBACK_RESPONSE,
+                reason=settings.RAG_INSUFFICIENT_EVIDENCE_REASON,
+                reliability=reliability_report,
             )
 
-        # Step 4: LLM Generation
+        # Step 5: LLM Generation (Initial Attempt)
         llm_response = await self.generation_service.generate_answer(
             question=processed_query.cleaned_query,
             context=context,
         )
+        current_answer = llm_response.content
 
-        # Step 5: Response Formatting
+        # Step 6: Post-generation Faithfulness Verification & Reliability Decision
+        verification = self.answer_verifier.verify_answer(
+            answer=current_answer,
+            context_text=context.context_text,
+        )
+
+        decision = self.reliability_engine.decide(
+            verification=verification,
+            current_answer=current_answer,
+            regeneration_attempt=0,
+        )
+
+        # Step 7: Optional Regeneration if unsupported claims detected
+        if decision.action == DecisionAction.REGENERATE:
+            logger.warning(
+                f"Reliability engine triggered REGENERATE. Prompting LLM with negative constraints. "
+                f"Unsupported claims: {decision.unsupported_claims}"
+            )
+            regen_prompt = self.reliability_engine.build_regeneration_prompt(
+                unsupported_claims=decision.unsupported_claims,
+                question=processed_query.cleaned_query,
+                context_text=context.context_text,
+            )
+            try:
+                regen_response = await self.generation_service.generate_correction(regen_prompt)
+                regen_answer = regen_response.content
+
+                verification_retry = self.answer_verifier.verify_answer(
+                    answer=regen_answer,
+                    context_text=context.context_text,
+                )
+                decision = self.reliability_engine.decide(
+                    verification=verification_retry,
+                    current_answer=regen_answer,
+                    regeneration_attempt=1,
+                )
+            except Exception as exc:
+                logger.error(f"Regeneration attempt failed: {exc}. Falling back to REFUSE.")
+                decision = self.reliability_engine.decide(
+                    verification=verification,
+                    current_answer=current_answer,
+                    regeneration_attempt=settings.RAG_MAX_REGENERATION_ATTEMPTS,
+                )
+
+        reliability_report = ReliabilityReport(
+            status=decision.action.value,
+            faithfulness_score=decision.faithfulness_score,
+            supported=decision.supported,
+            unsupported_claims=decision.unsupported_claims,
+            reason=decision.reason,
+        )
+
+        # Step 8: Response Formatting
         return self.response_formatter.format_response(
             question=processed_query.cleaned_query,
-            answer=llm_response.content,
+            answer=decision.final_answer,
             evidence_chunks=context.included_chunks,
             query_keywords=processed_query.keywords,
             model_name=llm_response.model_name,
+            reliability=reliability_report,
         )
