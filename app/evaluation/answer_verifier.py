@@ -105,19 +105,19 @@ class AnswerVerifier:
             if s.strip()
         ]
 
-        META_FRAMING_PATTERNS = [
-            r"strictly adhere to the (rules|instructions)",
-            r"based (solely )?on the provided (context|documentation)",
-            r"i (will|must) (strictly )?(adhere|follow)",
-            r"as an ai",
-            r"here is the answer based",
+        # Patterns for standalone conversational meta-commentary sentences that contain no facts
+        STANDALONE_META_PATTERNS = [
+            r"^i\s+(will|must)\s+(strictly\s+)?(adhere|follow|comply)",
+            r"^as\s+an\s+ai\b",
+            r"^here\s+is\s+the\s+answer\s+based\b",
         ]
 
         claims: List[str] = []
         for s in raw_sentences:
-            # Skip conversational meta-framing sentences
-            if any(re.search(p, s, flags=re.IGNORECASE) for p in META_FRAMING_PATTERNS):
+            # Skip standalone conversational meta-framing sentences
+            if any(re.search(p, s.strip(), flags=re.IGNORECASE) for p in STANDALONE_META_PATTERNS):
                 continue
+
 
             # Filter meta framing prefix and conversational boilerplate
             s_clean = re.sub(
