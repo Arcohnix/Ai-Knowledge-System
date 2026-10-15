@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from app.api.v1.router import api_v1_router
 from app.core.config import settings
 from app.core.database import close_database_connections, ping_database
@@ -67,6 +69,12 @@ def create_application() -> FastAPI:
     # Mount API Routers
     app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
 
+    @app.get("/dashboard", tags=["Dashboard"], summary="Enterprise Observability & Admin Dashboard")
+    async def get_dashboard():
+        """Serves the standalone Enterprise Observability & Admin Dashboard."""
+        dashboard_path = Path(__file__).parent / "static" / "dashboard.html"
+        return FileResponse(dashboard_path, media_type="text/html")
+
     @app.get("/", tags=["Root"], summary="Root service discovery")
     async def root():
         """Returns fundamental service info and endpoints."""
@@ -76,6 +84,7 @@ def create_application() -> FastAPI:
             "environment": settings.ENVIRONMENT,
             "docs": "/docs",
             "health": f"{settings.API_V1_PREFIX}/health",
+            "dashboard": "/dashboard",
         }
 
     return app

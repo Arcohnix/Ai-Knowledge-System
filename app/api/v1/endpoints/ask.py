@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.schemas.ask import AskRequest, AskResponse
@@ -25,16 +25,19 @@ router = APIRouter()
 )
 async def ask_question(
     request: AskRequest,
+    raw_request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> AskResponse:
     """
     RAG Question-Answering endpoint.
     Retrieves evidence from ingested documents and generates grounded answers.
     """
+    request_id = getattr(raw_request.state, "request_id", None)
     rag_service = RAGService(session=db)
     return await rag_service.answer_question(
         question=request.question,
         top_k=request.top_k,
         similarity_threshold=request.similarity_threshold,
         filters=request.filters,
+        request_id=request_id,
     )

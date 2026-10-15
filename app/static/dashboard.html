@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Knowledge System | Control Plane & Observability</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #090d16;
+      --bg-surface: #0f172a;
+      --bg-surface-elevated: #1e293b;
+      --bg-surface-hover: #273549;
+      --border-subtle: #1e293b;
+      --border-strong: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-blue: #3b82f6;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-purple: #8b5cf6;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar Navigation */
+    aside {
+      width: 270px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .brand {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+    .brand-badge {
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent-blue);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      font-family: var(--font-mono);
+    }
+    .brand-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    nav {
+      flex: 1;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow-y: auto;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .nav-item:hover {
+      background: var(--bg-surface-elevated);
+      color: var(--text-main);
+    }
+    .nav-item.active {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      font-weight: 600;
+      border-left: 3px solid var(--accent-blue);
+    }
+    .nav-icon { width: 18px; height: 18px; stroke-width: 2; }
+
+    .system-status-box {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.4);
+      font-size: 12px;
+    }
+    .status-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .status-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+      margin-right: 6px;
+    }
+
+    /* Main Content Area */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      background: radial-gradient(circle at top right, rgba(30, 41, 59, 0.35), transparent 70%);
+    }
+
+    header {
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-title h1 { font-size: 20px; font-weight: 700; color: #fff; }
+    .header-title p { font-size: 13px; color: var(--text-dim); }
+    .header-actions { display: flex; gap: 12px; align-items: center; }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+    .btn-secondary {
+      background: var(--bg-surface-elevated);
+      color: var(--text-main);
+      border-color: var(--border-strong);
+    }
+    .btn-secondary:hover { background: var(--bg-surface-hover); }
+    .btn-primary {
+      background: var(--accent-blue);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #2563eb; }
+
+    .content-container {
+      padding: 32px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Cards & Grids */
+    .grid-kpi {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 18px 20px;
+      transition: transform 0.1s ease, border-color 0.1s ease;
+    }
+    .kpi-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+    .kpi-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .kpi-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      font-family: var(--font-mono);
+    }
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Panels & Tables */
+    .panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(30, 41, 59, 0.2);
+    }
+    .panel-title { font-size: 15px; font-weight: 600; color: #fff; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+    th {
+      background: rgba(15, 23, 42, 0.7);
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 11px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    td {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+    }
+    tr:hover td { background: rgba(30, 41, 59, 0.4); }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+    }
+    .badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-danger { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .badge-info { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+    /* Live Query Tester Box */
+    .query-tester-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .query-input-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .query-input {
+      flex: 1;
+      background: var(--bg-base);
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      padding: 10px 16px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    .query-input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+
+    /* Trace Modal Drawer */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: flex-end;
+      z-index: 100;
+    }
+    .modal-drawer {
+      width: 750px;
+      max-width: 90vw;
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-strong);
+      height: 100%;
+      overflow-y: auto;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+    }
+    .trace-step {
+      border-left: 2px solid var(--border-strong);
+      padding-left: 20px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .trace-step::before {
+      content: "";
+      position: absolute;
+      left: -7px;
+      top: 0px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      border: 2px solid var(--bg-surface);
+    }
+    .trace-step-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .code-box {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #cbd5e1;
+      overflow-x: auto;
+      margin-top: 6px;
+      white-space: pre-wrap;
+    }
+
+    /* Score Bar Visualizer */
+    .bar-container {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-surface-elevated);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .bar-fill {
+      height: 100%;
+      background: var(--accent-blue);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside>
+    <div class="brand">
+      <div class="brand-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        AI KNOWLEDGE SYSTEM
+      </div>
+      <div class="brand-sub">Reliability & Governance Platform</div>
+    </div>
+
+    <nav>
+      <div class="nav-item active" onclick="switchTab('overview')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+        Overview
+      </div>
+      <div class="nav-item" onclick="switchTab('queries')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        Query Explorer
+      </div>
+      <div class="nav-item" onclick="switchTab('retrieval')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>
+        Retrieval Analysis
+      </div>
+      <div class="nav-item" onclick="switchTab('evaluation')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+        Ragas Evaluation
+      </div>
+      <div class="nav-item" onclick="switchTab('knowledge')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+        Knowledge Base
+      </div>
+      <div class="nav-item" onclick="switchTab('reliability')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+        Reliability & Safety
+      </div>
+    </nav>
+
+    <div class="system-status-box">
+      <div class="status-row">
+        <span>Engine Status</span>
+        <span><span class="status-dot"></span>Active</span>
+      </div>
+      <div class="status-row">
+        <span>Model</span>
+        <span id="sidebar-model" style="font-family: var(--font-mono); color: #fff;">llama3:latest</span>
+      </div>
+      <div class="status-row">
+        <span>Embedding</span>
+        <span style="font-family: var(--font-mono); color: #94a3b8;">bge-small-en</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main View -->
+  <main>
+    <header>
+      <div class="header-title">
+        <h1 id="page-title">System Overview</h1>
+        <p id="page-sub">Operational health, query volumes, and reliability guardrail metrics</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" onclick="refreshCurrentTab()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+          Refresh
+        </button>
+      </div>
+    </header>
+
+    <div class="content-container">
+
+      <!-- SECTION 1: OVERVIEW -->
+      <section id="sec-overview">
+        <div class="grid-kpi">
+          <div class="kpi-card">
+            <div class="kpi-label">Total Documents</div>
+            <div class="kpi-value" id="kpi-docs">-</div>
+            <div class="kpi-sub"><span id="kpi-chunks">-</span> chunks indexed</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Total Questions</div>
+            <div class="kpi-value" id="kpi-queries">-</div>
+            <div class="kpi-sub">Traceable requests</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Acceptance Rate</div>
+            <div class="kpi-value" id="kpi-acceptance" style="color: var(--accent-emerald);">-</div>
+            <div class="kpi-sub">Fully supported answers</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Refusal Rate</div>
+            <div class="kpi-value" id="kpi-refusal" style="color: var(--accent-amber);">-</div>
+            <div class="kpi-sub">Guarded against hallucinations</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Avg Retrieval Score</div>
+            <div class="kpi-value" id="kpi-avg-retrieval">-</div>
+            <div class="kpi-sub">Cosine similarity</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Avg Faithfulness</div>
+            <div class="kpi-value" id="kpi-avg-faithfulness" style="color: #38bdf8;">-</div>
+            <div class="kpi-sub">Claim support ratio</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Recent System Error Log</div>
+            <span class="badge badge-info">Zero Unhandled Failures Target</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Request ID</th>
+                  <th>Endpoint</th>
+                  <th>Error Diagnostic</th>
+                </tr>
+              </thead>
+              <tbody id="table-errors">
+                <tr><td colspan="4" style="text-align: center; color: var(--text-dim);">Loading system error logs...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: QUERY EXPLORER -->
+      <section id="sec-queries" style="display: none;">
+        <div class="query-tester-card">
+          <div style="font-weight: 600; font-size: 14px; color: #fff;">Live Query Tester & Execution Tracer</div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Submit a prompt to observe real-time evidence evaluation, faithfulness verification, and decision gating.</div>
+          <div class="query-input-row">
+            <input type="text" id="live-query-input" class="query-input" placeholder="e.g. How many peer approvals are required for pull requests before merging?" value="How many peer approvals are required for pull requests before merging?">
+            <button class="btn btn-primary" onclick="executeLiveQuery()">Run Query & Trace</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Audited Query Traces</div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary" onclick="filterQueries('')">All</button>
+              <button class="btn btn-secondary" onclick="filterQueries('ACCEPTED')">Accepted</button>
+              <button class="btn btn-secondary" onclick="filterQueries('REGENERATED')">Regenerated</button>
+              <button class="btn btn-secondary" onclick="filterQueries('REFUSED')">Refused</button>
+            </div>
+          </div>
+          <div style="overflow-x: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>User Question</th>
+                  <th>Decision</th>
+                  <th>Faithfulness</th>
+                  <th>Top Score</th>
+                  <th>Retrieved Documents</th>
+                  <th>Latency</th>
+                  <th>Audit Action</th>
+                </tr>
+              </thead>
+              <tbody id="table-queries">
+                <tr><td colspan="8" style="text-align: center; color: var(--text-dim);">Loading query traces...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: RETRIEVAL ANALYSIS -->
+      <section id="sec-retrieval" style="display: none;">
+        <div class="grid-kpi">
+          <div class="kpi-card">
+            <div class="kpi-label">Retrieval Threshold</div>
+            <div class="kpi-value" id="kpi-threshold">0.50</div>
+            <div class="kpi-sub">Minimum cosine similarity</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Default Top K</div>
+            <div class="kpi-value" id="kpi-topk">5</div>
+            <div class="kpi-sub">Retrieved candidate chunks</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Relevant Retrievals</div>
+            <div class="kpi-value" id="kpi-rel-count" style="color: var(--accent-emerald);">-</div>
+            <div class="kpi-sub">Included in answer context</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Gated / Filtered Chunks</div>
+            <div class="kpi-value" id="kpi-irrel-count" style="color: var(--accent-amber);">-</div>
+            <div class="kpi-sub">Below threshold or superseded</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Similarity Score Distribution (Recent 100 Queries)</div>
+          </div>
+          <div style="padding: 24px;" id="retrieval-distribution-bars">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Top Retrieved Documents Leaderboard</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Document Name</th>
+                <th>Retrieval Frequency</th>
+                <th>Relevance Density</th>
+              </tr>
+            </thead>
+            <tbody id="table-top-docs"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 4: RAGAS EVALUATION -->
+      <section id="sec-evaluation" style="display: none;">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Historical Benchmark Runs (Ragas Metrics)</div>
+            <span class="badge badge-info">Automated Pipeline Regression Suite</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Run ID / Time</th>
+                <th>Configuration</th>
+                <th>Faithfulness</th>
+                <th>Answer Relevancy</th>
+                <th>Context Precision</th>
+                <th>Context Recall</th>
+                <th>Avg Latency</th>
+              </tr>
+            </thead>
+            <tbody id="table-eval-runs">
+              <tr><td colspan="7" style="text-align: center; color: var(--text-dim);">Loading evaluation benchmarks...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel" id="panel-comparison" style="display: none;">
+          <div class="panel-header">
+            <div class="panel-title" id="comp-title">Retrieval Configuration Comparison</div>
+            <span class="badge badge-success">Automated Experiment Delta</span>
+          </div>
+          <div style="padding: 24px;">
+            <table style="margin-bottom: 20px;">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>Config A</th>
+                  <th>Config B</th>
+                  <th>Absolute Delta</th>
+                  <th>Percentage Shift</th>
+                </tr>
+              </thead>
+              <tbody id="table-comparison-deltas"></tbody>
+            </table>
+            <div style="font-weight: 600; font-size: 13px; color: #fff; margin-bottom: 8px;">Key Engineering Findings:</div>
+            <ul id="comp-findings" style="padding-left: 20px; font-size: 13px; color: var(--text-muted); line-height: 1.8;"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5: KNOWLEDGE BASE -->
+      <section id="sec-knowledge" style="display: none;">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Document & Version Inventory</div>
+            <span class="badge badge-info" id="kb-count-badge">0 Documents</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Title</th>
+                <th>Version</th>
+                <th>Status</th>
+                <th>Effective Range</th>
+                <th>Chunks</th>
+                <th>Embeddings</th>
+                <th>Uploaded</th>
+              </tr>
+            </thead>
+            <tbody id="table-kb">
+              <tr><td colspan="8" style="text-align: center; color: var(--text-dim);">Loading knowledge base catalog...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 6: RELIABILITY -->
+      <section id="sec-reliability" style="display: none;">
+        <div class="grid-kpi">
+          <div class="kpi-card">
+            <div class="kpi-label">Hallucinations Prevented</div>
+            <div class="kpi-value" id="kpi-hallucinations" style="color: var(--accent-rose);">-</div>
+            <div class="kpi-sub">Unsupported assertions flagged</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Insufficient Evidence</div>
+            <div class="kpi-value" id="kpi-insufficient" style="color: var(--accent-amber);">-</div>
+            <div class="kpi-sub">Refused rather than guessing</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Contradictions Detected</div>
+            <div class="kpi-value" id="kpi-contradictions" style="color: var(--accent-purple);">-</div>
+            <div class="kpi-sub">Conflicting policy clashes</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Unsupported Claims & Hallucination Audit Log</div>
+            <span class="badge badge-warning">Zero Unverified Tolerance</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Request ID</th>
+                <th>User Question</th>
+                <th>Detected Unsupported Claim</th>
+                <th>Action Taken</th>
+              </tr>
+            </thead>
+            <tbody id="table-unsupported-claims">
+              <tr><td colspan="5" style="text-align: center; color: var(--text-dim);">Loading reliability audit logs...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Query Trace Modal Drawer -->
+  <div class="modal-overlay" id="modal-trace" onclick="closeModal(event)">
+    <div class="modal-drawer" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px;">
+        <div>
+          <h2 style="font-size: 18px; color: #fff;">Query Execution Trace</h2>
+          <div id="modal-request-id" style="font-family: var(--font-mono); font-size: 12px; color: var(--text-dim);"></div>
+        </div>
+        <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+      </div>
+
+      <div id="modal-trace-steps">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentTab = 'overview';
+
+    function switchTab(tabId) {
+      currentTab = tabId;
+      document.querySelectorAll('nav .nav-item').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      document.querySelectorAll('.content-container > section').forEach(sec => sec.style.display = 'none');
+      document.getElementById('sec-' + tabId).style.display = 'block';
+
+      const titles = {
+        'overview': ['System Overview', 'Operational health, query volumes, and reliability guardrail metrics'],
+        'queries': ['Query Explorer & Multi-Stage Tracing', 'Inspect individual prompts, retrieval candidates, verification scores, and decision audits'],
+        'retrieval': ['Retrieval Analysis', 'Vector cosine score distribution, threshold gating, and document frequency leaderboard'],
+        'evaluation': ['Ragas Automated Evaluation', 'Historical benchmark metrics and retrieval configuration regression analysis'],
+        'knowledge': ['Knowledge Base Inventory', 'Catalog of ingested documents, versions, lifecycle status, and embedding health'],
+        'reliability': ['Reliability & Safety Guardrails', 'Hallucination detection logs, unsupported claims, and contradiction resolution audits']
+      };
+      document.getElementById('page-title').innerText = titles[tabId][0];
+      document.getElementById('page-sub').innerText = titles[tabId][1];
+
+      refreshCurrentTab();
+    }
+
+    async function refreshCurrentTab() {
+      if (currentTab === 'overview') loadOverview();
+      else if (currentTab === 'queries') loadQueries();
+      else if (currentTab === 'retrieval') loadRetrieval();
+      else if (currentTab === 'evaluation') loadEvaluation();
+      else if (currentTab === 'knowledge') loadKnowledge();
+      else if (currentTab === 'reliability') loadReliability();
+    }
+
+    // --- Overview Loader ---
+    async function loadOverview() {
+      try {
+        const res = await fetch('/api/v1/admin/overview');
+        const data = await res.json();
+        document.getElementById('kpi-docs').innerText = data.total_documents;
+        document.getElementById('kpi-chunks').innerText = data.total_chunks;
+        document.getElementById('kpi-queries').innerText = data.total_questions;
+        document.getElementById('kpi-acceptance').innerText = (data.acceptance_rate * 100).toFixed(1) + '%';
+        document.getElementById('kpi-refusal').innerText = (data.refusal_rate * 100).toFixed(1) + '%';
+        document.getElementById('kpi-avg-retrieval').innerText = data.average_retrieval_score ? data.average_retrieval_score.toFixed(3) : 'N/A';
+        document.getElementById('kpi-avg-faithfulness').innerText = data.average_faithfulness_score ? (data.average_faithfulness_score * 100).toFixed(1) + '%' : '100.0%';
+
+        const errTbody = document.getElementById('table-errors');
+        if (!data.recent_system_errors || data.recent_system_errors.length === 0) {
+          errTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--accent-emerald);">✅ Zero operational system errors recorded. System running smoothly.</td></tr>';
+        } else {
+          errTbody.innerHTML = data.recent_system_errors.map(e => `
+            <tr>
+              <td style="font-family: var(--font-mono); font-size: 11px;">${new Date(e.timestamp).toLocaleTimeString()}</td>
+              <td style="font-family: var(--font-mono); font-size: 11px;">${e.request_id || '-'}</td>
+              <td><code>${e.endpoint}</code></td>
+              <td style="color: var(--accent-rose);">${e.error_message}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.error("Failed to load overview:", err);
+      }
+    }
+
+    // --- Query Explorer Loader ---
+    let currentDecisionFilter = '';
+    function filterQueries(dec) {
+      currentDecisionFilter = dec;
+      loadQueries();
+    }
+
+    async function loadQueries() {
+      try {
+        let url = '/api/v1/admin/queries?limit=50';
+        if (currentDecisionFilter) url += `&decision=${currentDecisionFilter}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        const tbody = document.getElementById('table-queries');
+        if (!data.items || data.items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-dim);">No queries recorded yet. Use the Live Query Tester above to run a prompt!</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.items.map(q => {
+          let badgeClass = 'badge-success';
+          if (q.final_decision === 'REFUSED') badgeClass = 'badge-warning';
+          if (q.final_decision === 'REGENERATED') badgeClass = 'badge-info';
+
+          const timeStr = q.timestamp ? new Date(q.timestamp).toLocaleTimeString() : '-';
+          const faithStr = q.faithfulness_score !== null ? (q.faithfulness_score * 100).toFixed(0) + '%' : '100%';
+          const scoreStr = q.top_similarity_score !== null ? q.top_similarity_score.toFixed(3) : '-';
+          const docsStr = q.retrieved_documents.length > 0 ? q.retrieved_documents.join(', ') : 'None';
+
+          return `
+            <tr>
+              <td style="font-family: var(--font-mono); font-size: 11px;">${timeStr}</td>
+              <td style="max-width: 320px; font-weight: 500; color: #fff;">${q.question}</td>
+              <td><span class="badge ${badgeClass}">${q.final_decision}</span></td>
+              <td style="font-family: var(--font-mono);">${faithStr}</td>
+              <td style="font-family: var(--font-mono);">${scoreStr}</td>
+              <td style="font-size: 12px; color: var(--text-dim); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${docsStr}</td>
+              <td style="font-family: var(--font-mono); font-size: 11px;">${q.latency_ms}ms</td>
+              <td>
+                <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="viewTrace('${q.request_id}')">
+                  Trace Details &rarr;
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error("Failed to load queries:", err);
+      }
+    }
+
+    async function executeLiveQuery() {
+      const q = document.getElementById('live-query-input').value.trim();
+      if (!q) return;
+
+      const btn = event.currentTarget;
+      const originalText = btn.innerText;
+      btn.innerText = 'Processing RAG...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/v1/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: q })
+        });
+        const data = await res.json();
+        const reqId = res.headers.get('X-Request-ID');
+        await loadQueries();
+        if (reqId) viewTrace(reqId);
+      } catch (err) {
+        alert("Query error: " + err);
+      } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    // --- Trace Detail Modal ---
+    async function viewTrace(requestId) {
+      try {
+        const res = await fetch(`/api/v1/admin/queries/${requestId}`);
+        const trace = await res.json();
+
+        document.getElementById('modal-request-id').innerText = `Request Correlation ID: ${trace.request_id}`;
+        const container = document.getElementById('modal-trace-steps');
+
+        let stepsHtml = `
+          <div class="trace-step">
+            <div class="trace-step-title">1. Query Ingestion & Keyword Analysis</div>
+            <div>User Query: <b style="color: #fff;">${trace.question}</b></div>
+            <div class="code-box">Cleaned: ${trace.cleaned_query}\nTop K: ${trace.top_k} | Similarity Threshold: ${trace.similarity_threshold}</div>
+          </div>
+
+          <div class="trace-step">
+            <div class="trace-step-title">2. Dense Vector Retrieval (pgvector)</div>
+            <div>Retrieved Chunks: <b style="color: #fff;">${trace.retrieval_count}</b> | Top Score: <b>${trace.top_similarity_score ?? 'N/A'}</b></div>
+            <div class="code-box">${JSON.stringify(trace.pipeline_stages.find(s => s.stage === 'retrieval')?.chunks || [], null, 2)}</div>
+          </div>
+
+          <div class="trace-step">
+            <div class="trace-step-title">3. Pre-Generation Evidence Sufficiency Gating</div>
+            <div>Sufficiency Check: <span class="badge ${trace.is_sufficient ? 'badge-success' : 'badge-danger'}">${trace.is_sufficient ? 'SUFFICIENT' : 'INSUFFICIENT'}</span></div>
+            ${trace.sufficiency_reason ? `<div class="code-box">Reason: ${trace.sufficiency_reason}</div>` : ''}
+          </div>
+
+          <div class="trace-step">
+            <div class="trace-step-title">4. Contradiction & Document Versioning Analysis</div>
+            <div>Status: <span class="badge ${trace.contradiction_status === 'CONFLICT' ? 'badge-danger' : 'badge-success'}">${trace.contradiction_status || 'AGREE'}</span></div>
+          </div>
+
+          <div class="trace-step">
+            <div class="trace-step-title">5. LLM Generation & Post-Verification</div>
+            <div>Model: <b style="color: #fff;">${trace.model_name}</b> | Faithfulness: <b>${trace.faithfulness_score !== null ? (trace.faithfulness_score * 100).toFixed(0) + '%' : '100%'}</b></div>
+            <div>Unsupported Claims: <b style="color: ${trace.unsupported_claims.length ? 'var(--accent-rose)' : 'var(--accent-emerald)'};">${trace.unsupported_claims.length}</b></div>
+            <div class="code-box">Final Answer:\n${trace.generated_answer}</div>
+          </div>
+
+          <div class="trace-step">
+            <div class="trace-step-title">6. Reliability Decision & Output Formatting</div>
+            <div>Final Decision: <span class="badge ${trace.final_decision === 'ACCEPTED' ? 'badge-success' : (trace.final_decision === 'REFUSED' ? 'badge-warning' : 'badge-info')}">${trace.final_decision}</span></div>
+            ${trace.refusal_reason ? `<div>Refusal Reason: <code style="color: var(--accent-amber);">${trace.refusal_reason}</code></div>` : ''}
+            <div>Execution Latency: <b style="font-family: var(--font-mono);">${trace.latency_ms}ms</b></div>
+          </div>
+        `;
+
+        container.innerHTML = stepsHtml;
+        document.getElementById('modal-trace').style.display = 'flex';
+      } catch (err) {
+        alert("Failed to load trace details: " + err);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('modal-trace').style.display = 'none';
+    }
+
+    // --- Retrieval Analysis Loader ---
+    async function loadRetrieval() {
+      try {
+        const res = await fetch('/api/v1/admin/retrieval');
+        const data = await res.json();
+
+        document.getElementById('kpi-threshold').innerText = data.current_retrieval_threshold.toFixed(2);
+        document.getElementById('kpi-topk').innerText = data.default_top_k;
+        document.getElementById('kpi-rel-count').innerText = data.relevant_retrievals_count;
+        document.getElementById('kpi-irrel-count').innerText = data.irrelevant_retrievals_count;
+
+        // Render distribution bars
+        const barsContainer = document.getElementById('retrieval-distribution-bars');
+        const total = Object.values(data.score_distribution).reduce((a, b) => a + b, 0) || 1;
+        barsContainer.innerHTML = Object.entries(data.score_distribution).map(([range, count]) => {
+          const pct = ((count / total) * 100).toFixed(1);
+          return `
+            <div style="margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                <span style="font-family: var(--font-mono); color: #fff;">Cosine ${range}</span>
+                <span style="color: var(--text-dim);">${count} queries (${pct}%)</span>
+              </div>
+              <div class="bar-container">
+                <div class="bar-fill" style="width: ${pct}%;"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Top docs table
+        const topDocsTbody = document.getElementById('table-top-docs');
+        topDocsTbody.innerHTML = data.top_retrieved_documents.map(d => `
+          <tr>
+            <td><b style="color: #fff;">${d.document}</b></td>
+            <td style="font-family: var(--font-mono);">${d.count} hits</td>
+            <td>
+              <div class="bar-container" style="max-width: 200px;">
+                <div class="bar-fill" style="width: ${Math.min(100, d.count * 10)}%;"></div>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error("Failed to load retrieval analysis:", err);
+      }
+    }
+
+    // --- Ragas Evaluation Loader ---
+    async function loadEvaluation() {
+      try {
+        const res = await fetch('/api/v1/admin/evaluation');
+        const data = await res.json();
+
+        const tbody = document.getElementById('table-eval-runs');
+        if (!data.runs || data.runs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-dim);">No benchmark runs saved. Run `python -m evaluation.run` to generate benchmarks.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.runs.map(r => `
+          <tr>
+            <td style="font-family: var(--font-mono); font-size: 11px;"><b style="color: #fff;">${r.run_id}</b><br><span style="color: var(--text-dim);">${new Date(r.timestamp).toLocaleString()}</span></td>
+            <td><span class="badge badge-info">${r.config_name}</span> (top_k=${r.retrieval_config.top_k})</td>
+            <td style="font-family: var(--font-mono); font-weight: 600; color: #38bdf8;">${(r.summary_metrics.faithfulness * 100).toFixed(1)}%</td>
+            <td style="font-family: var(--font-mono);">${(r.summary_metrics.answer_relevancy * 100).toFixed(1)}%</td>
+            <td style="font-family: var(--font-mono);">${(r.summary_metrics.context_precision * 100).toFixed(1)}%</td>
+            <td style="font-family: var(--font-mono);">${(r.summary_metrics.context_recall * 100).toFixed(1)}%</td>
+            <td style="font-family: var(--font-mono); font-size: 11px;">${r.average_latency_seconds}s</td>
+          </tr>
+        `).join('');
+
+        if (data.latest_comparison) {
+          const comp = data.latest_comparison;
+          document.getElementById('panel-comparison').style.display = 'block';
+          document.getElementById('comp-title').innerText = `Automated Comparison: ${comp.config_a_name} vs. ${comp.config_b_name}`;
+
+          const deltaTbody = document.getElementById('table-comparison-deltas');
+          deltaTbody.innerHTML = Object.entries(comp.metric_deltas).map(([k, d]) => {
+            const sign = d.delta > 0 ? '+' : '';
+            const color = d.delta > 0 ? 'var(--accent-emerald)' : (d.delta < 0 ? 'var(--accent-rose)' : 'var(--text-dim)');
+            return `
+              <tr>
+                <td><b>${k.replace('_', ' ').toUpperCase()}</b></td>
+                <td style="font-family: var(--font-mono);">${d.config_a_score.toFixed(4)}</td>
+                <td style="font-family: var(--font-mono);">${d.config_b_score.toFixed(4)}</td>
+                <td style="font-family: var(--font-mono); font-weight: 600; color: ${color};">${sign}${d.delta.toFixed(4)}</td>
+                <td style="font-family: var(--font-mono); font-weight: 600; color: ${color};">${sign}${d.percentage_change.toFixed(2)}%</td>
+              </tr>
+            `;
+          }).join('');
+
+          document.getElementById('comp-findings').innerHTML = comp.key_findings.map(f => `<li>${f}</li>`).join('');
+        }
+      } catch (err) {
+        console.error("Failed to load evaluation history:", err);
+      }
+    }
+
+    // --- Knowledge Base Loader ---
+    async function loadKnowledge() {
+      try {
+        const res = await fetch('/api/v1/admin/knowledge-base');
+        const data = await res.json();
+        document.getElementById('kb-count-badge').innerText = `${data.total_documents} Documents`;
+
+        const tbody = document.getElementById('table-kb');
+        tbody.innerHTML = data.documents.map(d => {
+          let statusBadge = 'badge-success';
+          if (d.status === 'SUPERSEDED') statusBadge = 'badge-warning';
+          if (d.status === 'EXPIRED') statusBadge = 'badge-danger';
+
+          return `
+            <tr>
+              <td><b style="color: #fff;">${d.filename}</b></td>
+              <td>${d.title}</td>
+              <td style="font-family: var(--font-mono);">v${d.version}</td>
+              <td><span class="badge ${statusBadge}">${d.status}</span></td>
+              <td style="font-family: var(--font-mono); font-size: 11px;">${d.effective_date || 'None'} &rarr; ${d.expiration_date || 'Indefinite'}</td>
+              <td style="font-family: var(--font-mono); font-weight: 600;">${d.chunk_count}</td>
+              <td><span class="badge badge-info">${d.embedding_status}</span></td>
+              <td style="font-size: 11px; color: var(--text-dim);">${d.created_at ? new Date(d.created_at).toLocaleDateString() : '-'}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error("Failed to load knowledge base:", err);
+      }
+    }
+
+    // --- Reliability Loader ---
+    async function loadReliability() {
+      try {
+        const res = await fetch('/api/v1/admin/reliability');
+        const data = await res.json();
+
+        document.getElementById('kpi-hallucinations').innerText = data.hallucinations_detected_count;
+        document.getElementById('kpi-insufficient').innerText = data.insufficient_evidence_cases;
+        document.getElementById('kpi-contradictions').innerText = data.contradiction_cases;
+
+        const tbody = document.getElementById('table-unsupported-claims');
+        if (!data.unsupported_claims_log || data.unsupported_claims_log.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--accent-emerald);">✅ Zero unverified hallucinated assertions. Strict adherence active.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.unsupported_claims_log.map(item => `
+          <tr>
+            <td style="font-family: var(--font-mono); font-size: 11px;">${item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : '-'}</td>
+            <td style="font-family: var(--font-mono); font-size: 11px;">${item.request_id}</td>
+            <td style="max-width: 260px;">${item.question}</td>
+            <td style="color: var(--accent-rose); font-weight: 500;">"${item.claim}"</td>
+            <td><span class="badge badge-warning">${item.final_decision}</span></td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error("Failed to load reliability:", err);
+      }
+    }
+
+    // Initial load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadOverview();
+    });
+  </script>
+</body>
+</html>

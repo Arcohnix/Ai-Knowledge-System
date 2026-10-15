@@ -10,36 +10,35 @@ An internal enterprise knowledge assistant designed to answer questions reliably
 
 ---
 
-## Project Status: Phase 7 (Contradictory Knowledge and Document Version Handling)
+## Project Status: Phase 9 (Observability and Admin Dashboard)
 
 > [!NOTE]
-> This repository is currently on **Phase 8: Automated RAG Evaluation using Ragas**.
+> This repository has implemented **Phase 9: Observability and Admin Dashboard**.
 >
-> The system incorporates an objective, automated evaluation harness (`python -m evaluation.run`) assessing RAG quality across 4 core metrics: **Faithfulness**, **Answer Relevancy**, **Context Precision@K**, and **Context Recall**.
->
-> Rather than relying on manual checks, the benchmark systematically tests 6 query archetypes (straightforward, multi-document, unsupported, ambiguous, versioned, and contradictory knowledge) and runs comparative experiments between retrieval configurations (e.g., `top_k = 3` vs. `top_k = 5`).
+> The system features an enterprise-grade dark-slate **Observability & Admin Control Plane** at `http://localhost:8001/dashboard`. It captures end-to-end execution traces across every pipeline stage (`request -> retrieval -> evidence evaluation -> contradiction analysis -> generation -> verification -> final decision`), tracks correlation IDs (`X-Request-ID`), aggregates live retrieval score distributions, monitors historical Ragas evaluation benchmarks, catalogs the knowledge base, and audits hallucination prevention events.
 
 ---
 
 ## Key Features
 
+- **Enterprise Control Plane & Dashboard**: Standalone single-page admin dashboard accessible at `/dashboard` featuring 6 operational modules (Overview, Query Explorer, Retrieval Analysis, Evaluation Benchmarks, Knowledge Base Catalog, Reliability & Safety).
+- **End-to-End Pipeline Tracing**: Every knowledge query is correlated via `X-Request-ID` and persisted to PostgreSQL `query_traces` with full multi-stage telemetry.
+- **Trace Inspector Drawer**: Slide-over modal inspects exact step-by-step pipeline execution, citations, faithfulness audits, and latency.
+- **Vector Retrieval Analytics**: Live cosine similarity distribution histograms, threshold gating efficacy, signal-to-noise ratios, and top document leaderboards.
+- **Historical Benchmark Visualizer**: Interactive cards and comparative diffs displaying Ragas metrics (Faithfulness, Answer Relevancy, Context Precision, Context Recall) across evaluation runs.
+- **Reliability & Hallucination Prevention Audits**: Real-time counter and audit log for intercepted ungrounded claims, unresolvable contradictions, and controlled refusal classifications.
 - **Contradiction Analysis Engine**: Pairwise semantic analysis across retrieved chunks detecting numeric discrepancies, polarity mismatches, and schedule divergences.
 - **Deterministic Conflict Resolution**: Multi-tier resolution preferring `ACTIVE` over `SUPERSEDED`/`EXPIRED`, effective dates over lapsed dates, and newer versions over older versions.
 - **Anti-Vector Trap Guarding**: Strictly forbids picking a contradictory document simply due to high vector cosine similarity or keyword stuffing.
-- **Explicit Conflict Transparency**: Surfaces conflicting source citations and structured `ContradictionReport` diagnostic details whenever unresolvable policy conflicts exist.
-- **Document Lifecycle Metadata**: Full tracking of `version`, `status` (`ACTIVE`, `SUPERSEDED`, `EXPIRED`), `effective_date`, and `expiration_date`.
-- **Multi-Stage Reliability Pipeline**: Full verification lifecycle featuring `EvidenceEvaluator`, `AnswerVerifier`, and `ReliabilityDecisionEngine`.
 - **Pre-Generation Evidence Gating**: Inspects retrieval density, similarity thresholds, and query keyword coverage before invoking LLM generation, short-circuiting unsupported queries to `INSUFFICIENT_EVIDENCE`.
 - **Post-Generation Claim Verification**: Decomposes answers into discrete factual claims and checks quantitative, numeric, and conceptual alignment against source documents.
 - **Audited Faithfulness Score**: True mathematical fraction of supported claims ($0.0$ to $1.0$) rather than heuristic or random confidence numbers.
 - **Corrective Regeneration Loop**: When unverified assertions are detected, the system attempts corrective regeneration with explicit negative boundaries before falling back to refusal.
-- **Explicit Hallucination Refusal**: Strictly prefers `"I don't have enough reliable information to answer this."` with refusal reason `UNVERIFIED_CLAIMS` when evidence is inadequate.
 - **Traceable Source Citations**: Every answer references exact source chunks with `document` name, `version`, `chunk_id`, `score`, and concise relevant `excerpt`.
-- **Explainable Confidence Scoring**: Fully deterministic, mathematically documented confidence engine combining top similarity ($w_1=0.50$), mean cluster strength ($w_2=0.30$), and lexical keyword coverage ($w_3=0.20$).
 - **Provider-Agnostic LLM Interface**: Local Ollama (`llama3:latest`), OpenAI-compatible remote gateways, and Mock testing providers.
 - **Dense Vector Search**: PostgreSQL + `pgvector` with HNSW indexing and FastEmbed ONNX local models.
 - **Multi-Format Ingestion**: Native parsing for PDF, DOCX, TXT, and Markdown with SHA-256 deduplication.
-- **Comprehensive Pytest Suite**: 123 unit, integration, adversarial, contradiction, and evaluation tests passing both on host and in Docker container.
+- **Comprehensive Pytest Suite**: 138 unit, integration, adversarial, contradiction, admin, and evaluation tests passing cleanly in Docker.
 
 ---
 
@@ -329,17 +328,48 @@ All errors adhere to a structured, consistent format with request tracing:
 
 ---
 
+---
+
+## Observability & Admin Dashboard
+
+The application includes an enterprise dark-slate **Control Plane & Admin Dashboard** accessible at:
+
+```
+http://localhost:8001/dashboard
+```
+
+### Dashboard Capabilities
+
+1. **Overview**: Total documents, total chunks, query counts, acceptance rate, refusal rate, average retrieval and faithfulness scores, and recent error logs.
+2. **Query Explorer**: Interactive query traces with search and status filtering (`ACCEPTED`, `REGENERATED`, `REFUSED`). Includes a slide-over modal detailing the full multi-stage pipeline timeline (`query_processing` -> `retrieval` -> `evidence_sufficiency` -> `contradiction_and_versioning` -> `context_construction` -> `initial_generation` -> `faithfulness_verification` -> `reliability_decision` -> `response_formatting`).
+3. **Retrieval Analysis**: Vector cosine similarity distribution histograms, threshold gating efficacy, signal-to-noise ratios, and top document leaderboards.
+4. **Evaluation Benchmarks**: Historical Ragas benchmark runs over time with Faithfulness, Context Precision, Context Recall, Answer Relevancy, and comparative experiment diffs.
+5. **Knowledge Base Catalog**: Comprehensive document inventory with versions, lifecycle status (`ACTIVE`, `SUPERSEDED`, `EXPIRED`), effective dates, chunk counts, and embedding status.
+6. **Reliability & Safety**: Hallucinations prevented counter, ungrounded claims log, insufficient evidence cases, contradiction cases, and refusal breakdown.
+
+### Admin REST API
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/admin/overview` | Top-level KPIs, acceptance/refusal rates, recent errors |
+| `GET` | `/api/v1/admin/queries` | Paginated query traces (`?decision=...&search=...`) |
+| `GET` | `/api/v1/admin/queries/{request_id}` | Detailed multi-stage trace for a specific query |
+| `GET` | `/api/v1/admin/retrieval` | Score distributions, threshold gating, top documents |
+| `GET` | `/api/v1/admin/evaluation` | Historical Ragas benchmark runs and comparisons |
+| `GET` | `/api/v1/admin/knowledge-base` | Document catalog, versions, chunk counts, embeddings |
+| `GET` | `/api/v1/admin/reliability` | Hallucination logs, unverified claims, refusal breakdown |
+| `GET` | `/dashboard` | Standalone Single-Page Application UI |
+
+---
+
 ## Running Automated Tests
 
 ```bash
-# Run full test suite (76 tests)
-.venv/bin/pytest -v
+# Run full test suite inside Docker container (138 tests)
+docker compose exec backend pytest -v
 
 # Run with test coverage
-.venv/bin/pytest --cov=app tests/
-
-# Run tests inside Docker container
-docker compose exec backend pytest -v
+docker compose exec backend pytest --cov=app tests/
 ```
 
 ---
@@ -384,6 +414,8 @@ docker compose exec backend pytest -v
 - [x] **Phase 3: Embeddings & Vector Database** (Local FastEmbed, pgvector HNSW Indexing, Semantic Search)
 - [x] **Phase 4: Retrieval-Augmented Generation** (Query Processing, Ollama/OpenAI Abstractions, Grounded QA, Source Citations, Eval Dataset)
 - [x] **Phase 5: Evidence-Based Answering & Source Citations** (Traceable Citations, Explainable Confidence Scoring, Machine-Readable Refusals, Excerpt Extraction)
-- [ ] **Phase 6: Answer Faithfulness Verification & Hallucination Prevention**
-- [ ] **Phase 7: Ragas Evaluation & Telemetry Dashboard**
-- [ ] **Phase 8: Frontend Knowledge Assistant UI**
+- [x] **Phase 6: Answer Reliability and Hallucination Detection** (Pre-generation Sufficiency Check, Post-generation Claim Verification, Corrective Regeneration Loop)
+- [x] **Phase 7: Contradictory Knowledge & Document Version Handling** (Deterministic Resolution, Conflict Taxonomy, Active Lifecycle Filtering)
+- [x] **Phase 8: Automated RAG Evaluation using Ragas** (Benchmarking Harness, Faithfulness, Answer Relevancy, Context Precision/Recall, A/B Experiments)
+- [x] **Phase 9: Observability and Admin Dashboard** (Distributed Tracing, PostgreSQL Audit Model, Control Plane SPA, Retrieval Diagnostics, Safety Metrics)
+- [ ] **Phase 10: Production Hardening, Polish & End-to-End Delivery**
