@@ -7,8 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.exceptions import ConflictError, NotFoundError, ValidationException
 from app.core.logging import get_logger
+from app.ingestion.base import BaseEmbedder
 from app.ingestion.chunker import SensibleTextChunker
 from app.ingestion.cleaner import TextCleaner
+from app.ingestion.embeddings import get_embedder
 from app.ingestion.parsers.parser_factory import ParserFactory
 from app.models.document import DocumentModel
 from app.repositories.document_repository import DocumentRepository
@@ -19,12 +21,17 @@ logger = get_logger(__name__)
 class IngestionService:
     """
     Coordinates the document ingestion pipeline:
-    Validation -> Checksum / Duplicate Check -> Parsing -> Text Extraction -> Cleaning -> Chunking -> Persistence.
+    Validation -> Checksum / Duplicate Check -> Parsing -> Text Extraction -> Cleaning -> Chunking -> Embedding -> Persistence.
     """
 
-    def __init__(self, session: AsyncSession):
+    def __init__(
+        self,
+        session: AsyncSession,
+        embedder: Optional[BaseEmbedder] = None,
+    ):
         self.session = session
         self.repository = DocumentRepository(session)
+        self.embedder = embedder or get_embedder()
 
     @staticmethod
     def calculate_checksum(file_bytes: bytes) -> str:
@@ -116,7 +123,12 @@ class IngestionService:
                 f"Failed to generate chunks for document '{filename}'."
             )
 
-        # 6. Metadata Assembly
+        # 6. Embedding Generation
+        chunk_texts = [split["content"] for split in chunk_splits]
+        logger.info(f"Generating embeddings for {len(chunk_texts)} chunks using {self.embedder.provider_name} ({self.embedder.model_name})...")
+        chunk_embeddings = await self.embedder.embed_documents(chunk_texts)
+
+        # 7. Metadata Assembly
         title = raw_doc.metadata.get("title") or os.path.splitext(filename)[0]
         doc_metadata = {
             **raw_doc.metadata,
@@ -125,13 +137,17 @@ class IngestionService:
             "chunk_count": len(chunk_splits),
             "chunk_size_configured": chunker.chunk_size,
             "chunk_overlap_configured": chunker.chunk_overlap,
+            "embedding_provider": self.embedder.provider_name,
+            "embedding_model": self.embedder.model_name,
+            "embedding_dimension": self.embedder.embedding_dimension,
         }
 
-        # Prepare chunk records
+        # Prepare chunk records with vector embeddings
         chunks_data = [
             {
                 "chunk_index": split["chunk_index"],
                 "content": split["content"],
+                "embedding": emb,
                 "chunk_metadata": {
                     "char_count": split["char_count"],
                     "token_estimate": split["token_estimate"],
@@ -140,7 +156,7 @@ class IngestionService:
                     "document_title": title,
                 },
             }
-            for split in chunk_splits
+            for split, emb in zip(chunk_splits, chunk_embeddings)
         ]
 
         document_fields = {
@@ -153,7 +169,7 @@ class IngestionService:
             "doc_metadata": doc_metadata,
         }
 
-        # 7. Persistence
+        # 8. Persistence (Document + Vector-indexed Chunks)
         created_doc = await self.repository.create_with_chunks(document_fields, chunks_data)
         logger.info(
             f"Successfully ingested document '{filename}' (ID: {created_doc.id}, Chunks: {len(chunks_data)}, Size: {len(content)} bytes)"

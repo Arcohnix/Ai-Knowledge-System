@@ -13,23 +13,24 @@ An internal enterprise knowledge assistant designed to answer questions reliably
 ## Project Status: Phase 1 (Foundation)
 
 > [!NOTE]
-> This repository is currently on **Phase 2: Document Ingestion Pipeline**.
+> This repository is currently on **Phase 3: Embeddings and Vector Database**.
 >
-> Core foundation and document ingestion are operational: files (PDF, DOCX, TXT, Markdown) are validated, parsed, cleaned, intelligently chunked, and stored with rich metadata and duplicate detection. **No embeddings or vector search implemented yet.**
+> Ingested document chunks are converted into dense vector embeddings and stored in PostgreSQL using `pgvector`. A reusable semantic retrieval service and search endpoint (`POST /api/v1/search`) support cosine similarity ranking, configurable thresholds, top_k limits, and metadata filtering. **No LLM generation implemented yet.**
 
 ---
 
 ## Key Features
 
+- **Dense Vector Embeddings**: Pluggable embedding providers supporting **Local models** (`FastEmbed` / BAAI/bge-small-en-v1.5 in ONNX runtime), **API providers** (OpenAI / Azure / Ollama), and **Deterministic Mock embedders** for offline testing.
+- **PostgreSQL + pgvector Integration**: Native vector storage and HNSW index (`vector_cosine_ops`) for sub-millisecond approximate nearest neighbor searches.
+- **Semantic Retrieval Service**: Reusable retrieval pipeline with configurable `top_k`, cosine `similarity_threshold`, and metadata filtering (by document ID, type, etc.).
 - **Multi-Format Ingestion**: Native parsing support for **PDF** (`pypdf`), **DOCX** (`python-docx`), **Plain Text** (`.txt`), and **Markdown** (`.md`).
 - **Duplicate Document Detection**: SHA-256 content hashing blocks duplicate uploads with a structured 409 Conflict response.
 - **Sensible Structural Chunking**: Recursive hierarchical chunking respecting markdown headings, paragraph breaks (`\n\n`), sentence boundaries, and words with configurable `chunk_size` and `chunk_overlap`.
 - **Text Normalization & Cleaning**: Strips null bytes, non-printable control codes, normalizes Unicode (NFKC), and standardizes line breaks.
 - **Relational Persistence**: PostgreSQL tables for `documents` and `document_chunks` with cascade deletion, indexed foreign keys, and JSON metadata.
-- **Clean Layered Architecture**: Strictly separated presentation (`api`), domain logic (`services`), data access (`repositories`), and core infrastructure (`core`).
-- **Pluggable AI Abstractions**: Abstract Base Classes ready for swappable LLM providers (Ollama / OpenAI / Claude / Gemini), Vector Stores (pgvector / Chroma / Qdrant), Document Parsers, and Evaluators.
 - **Production Observability**: Correlation IDs (`X-Request-ID`) and request timing (`X-Process-Time`) on every request.
-- **Comprehensive Pytest Suite**: 41 unit and integration tests passing both on host and inside Docker container.
+- **Comprehensive Pytest Suite**: 47 unit and integration tests passing both on host and inside Docker container.
 
 ---
 

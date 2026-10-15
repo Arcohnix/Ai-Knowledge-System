@@ -11,6 +11,12 @@ from app.schemas.health import (
     HealthComponents,
     SystemHealth,
 )
+from app.schemas.search import (
+    DocumentSnippet,
+    SearchRequest,
+    SearchResponse,
+    SearchResultItem,
+)
 
 __all__ = [
     "APIResponse",
@@ -24,4 +30,8 @@ __all__ = [
     "DocumentResponse",
     "DocumentDetailResponse",
     "DocumentListResponse",
+    "SearchRequest",
+    "SearchResponse",
+    "SearchResultItem",
+    "DocumentSnippet",
 ]

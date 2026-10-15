@@ -47,6 +47,16 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_BYTES: int = 25 * 1024 * 1024  # 25 MB
     SUPPORTED_DOCUMENT_TYPES: List[str] = ["pdf", "docx", "txt", "md", "markdown"]
 
+    # Embeddings & Vector Store
+    EMBEDDING_PROVIDER: str = "local"  # 'local' (fastembed), 'api' / 'openai', 'mock'
+    EMBEDDING_MODEL_NAME: str = "BAAI/bge-small-en-v1.5"
+    EMBEDDING_DIMENSION: int = 384
+    EMBEDDING_API_KEY: Optional[str] = None
+    EMBEDDING_API_BASE_URL: str = "https://api.openai.com/v1"
+    EMBEDDING_BATCH_SIZE: int = 32
+    DEFAULT_SEARCH_TOP_K: int = 5
+    DEFAULT_SIMILARITY_THRESHOLD: float = 0.5
+
     # CORS
     ALLOWED_ORIGINS: Union[List[str], str] = ["*"]
 

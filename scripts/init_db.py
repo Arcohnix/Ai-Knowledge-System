@@ -43,6 +43,27 @@ async def initialize_database() -> None:
         # Create all tables registered with Base
         logger.info("Synchronizing metadata tables...")
         await conn.run_sync(Base.metadata.create_all)
+
+        # Ensure embedding vector column exists on existing tables (schema evolution)
+        if "postgresql" in settings.async_database_url:
+            try:
+                await conn.execute(text(
+                    f"ALTER TABLE document_chunks ADD COLUMN IF NOT EXISTS embedding vector({settings.EMBEDDING_DIMENSION});"
+                ))
+                logger.info("Verified/added embedding vector column on document_chunks.")
+            except Exception as e:
+                logger.warning(f"Embedding column verification note: {e}")
+
+            # Create HNSW vector index for pgvector
+            try:
+                await conn.execute(text(
+                    "CREATE INDEX IF NOT EXISTS ix_document_chunks_embedding_hnsw "
+                    "ON document_chunks USING hnsw (embedding vector_cosine_ops);"
+                ))
+                logger.info("pgvector HNSW cosine index verified/created.")
+            except Exception as e:
+                logger.warning(f"HNSW index creation note: {e}")
+
         logger.info("Database initialization completed successfully.")
 
 

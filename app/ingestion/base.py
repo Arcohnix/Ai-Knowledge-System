@@ -41,6 +41,18 @@ class BaseEmbedder(ABC):
 
     @property
     @abstractmethod
+    def provider_name(self) -> str:
+        """Provider identifier (e.g. 'local', 'openai')."""
+        pass
+
+    @property
+    @abstractmethod
+    def model_name(self) -> str:
+        """Name of the underlying embedding model."""
+        pass
+
+    @property
+    @abstractmethod
     def embedding_dimension(self) -> int:
         """The dimensionality of generated embeddings."""
         pass

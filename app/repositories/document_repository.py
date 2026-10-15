@@ -74,6 +74,7 @@ class DocumentRepository(BaseRepository[DocumentModel]):
                 document_id=doc.id,
                 chunk_index=chunk_dict["chunk_index"],
                 content=chunk_dict["content"],
+                embedding=chunk_dict.get("embedding"),
                 chunk_metadata=chunk_dict.get("chunk_metadata", {}),
             )
             for chunk_dict in chunks_data
