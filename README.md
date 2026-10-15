@@ -10,33 +10,27 @@ An internal enterprise knowledge assistant designed to answer questions reliably
 
 ---
 
-## Project Status: Phase 4 (Retrieval-Augmented Generation)
+## Project Status: Phase 5 (Evidence-Based Answering and Source Citations)
 
 > [!NOTE]
-> This repository is currently on **Phase 4: Retrieval-Augmented Generation (RAG)**.
+> This repository is currently on **Phase 5: Evidence-Based Answering and Source Citations**.
 >
-> The system implements an end-to-end question-answering pipeline: Query Processing -> Semantic Evidence Retrieval (pgvector) -> Context Construction with token budgeting -> LLM Generation (Ollama local / OpenAI-compatible / Mock) -> Attributed Source Response Formatting. Strict grounding instructions demand refusal with "information unavailable" when evidence is lacking.
+> Every factual answer is rigorously grounded and traceable directly to retrieved knowledge chunks. The API returns structured source citations (`document`, `version`, `chunk_id`, `score`, and `excerpt`), a mathematically derived confidence score (`high`, `medium`, `low`, `none`), and machine-readable refusal codes (`INSUFFICIENT_EVIDENCE`) when evidence is absent or insufficient.
 
 ---
 
 ## Key Features
 
-- **End-to-End RAG Pipeline**: Fully decoupled modular services:
-  1. `QueryProcessingService`: Sanitizes, normalizes, and extracts keywords.
-  2. `RetrievalService`: Coordinates vector embeddings and PostgreSQL `pgvector` HNSW search.
-  3. `ContextConstructionService`: Assembles numbered document citations with token/char budgeting.
-  4. `LLMGenerationService`: Interacts with provider-agnostic LLM interface with grounding prompts.
-  5. `ResponseFormattingService`: Structures attributed citations with relevance scores or clean refusal.
-- **Provider-Agnostic LLM Interface**:
-  - **Local Ollama Integration**: Native local inference via `http://localhost:11434` (e.g. `llama3:latest`).
-  - **OpenAI-Compatible Client**: Works with OpenAI, vLLM, Azure, or remote endpoints.
-  - **Deterministic Mock Provider**: Used for offline CI/CD and rapid reproducible testing.
-- **Strict Grounding & Citation Prompts**: System prompt instructs model to answer solely from context, forbid external facts, refuse on insufficient evidence, and reference source markers `[Document X]`.
-- **Benchmark Evaluation Dataset**: Curated benchmark (`tests/data/qa_eval_dataset.json`) with grounded enterprise questions and out-of-scope refusal verification.
-- **Dense Vector Embeddings**: Local FastEmbed (BAAI/bge-small-en-v1.5) in ONNX runtime, or API providers.
-- **PostgreSQL + pgvector**: HNSW vector index (`vector_cosine_ops`) for sub-millisecond retrieval.
-- **Multi-Format Ingestion**: PDF (`pypdf`), DOCX (`python-docx`), TXT, Markdown (`.md`).
-- **Comprehensive Pytest Suite**: 66 unit and integration tests passing both on host and inside Docker container.
+- **Traceable Source Citations**: Every answer references exact source chunks with `document` name, `version`, `chunk_id`, `score`, and concise relevant `excerpt`.
+- **Explainable Confidence Scoring**: Fully deterministic, mathematically documented confidence engine combining top similarity ($w_1=0.50$), mean cluster strength ($w_2=0.30$), and lexical keyword coverage ($w_3=0.20$).
+- **Insufficient Evidence Gating**: Two-tiered protection preventing hallucinations on ungrounded questions:
+  - Short-circuits pre-generation if retrieval yields 0 chunks or low similarity.
+  - Automatically zero-sources and returns `INSUFFICIENT_EVIDENCE` with controlled refusal on unanswerable questions.
+- **Provider-Agnostic LLM Interface**: Local Ollama (`llama3:latest`), OpenAI-compatible remote gateways, and Mock testing providers.
+- **Strict Grounding Prompts**: System instructions forbidding external assumptions and demanding citations.
+- **Dense Vector Search**: PostgreSQL + `pgvector` with HNSW indexing and FastEmbed ONNX local models.
+- **Multi-Format Ingestion**: Native parsing for PDF, DOCX, TXT, and Markdown with SHA-256 deduplication.
+- **Comprehensive Pytest Suite**: 76 unit and integration tests passing both on host and in Docker container.
 
 ---
 
@@ -260,33 +254,36 @@ Executes an end-to-end Retrieval-Augmented Generation question-answering pipelin
 }
 ```
 
-**Sample 200 OK Response:**
+**Sample 200 OK Response (Supported Question):**
 ```json
 {
   "question": "How long must customer personal identification data be retained?",
-  "answer": "Based on the provided context, customer personal identification data must be retained for at least 7 years pursuant to regulatory requirements [Document 1].",
+  "answer": "Based solely on the context provided, customer personal identification data must be retained for at least 7 years pursuant to regulatory requirements [Document 1].",
+  "confidence": "high",
+  "confidence_score": 0.8367,
+  "reason": null,
   "sources": [
     {
-      "document": {
-        "document_id": "256b57cd-6b04-4ebc-97e1-90576ce6911b",
-        "title": "sample",
-        "filename": "sample.docx",
-        "document_type": "docx",
-        "source": "upload",
-        "version": "1.0"
-      },
-      "chunk": {
-        "chunk_id": "9377674e-b7fe-49f6-8fa5-127f6c136ada",
-        "chunk_index": 0,
-        "content": "Company Data Retention Policy\n\nCustomer personal identification data must be retained for at least 7 years pursuant to regulatory requirements.",
-        "metadata": {
-          "char_count": 213,
-          "token_estimate": 53
-        }
-      },
-      "relevance_score": 0.9256
+      "document": "sample.docx",
+      "version": "1.0",
+      "chunk_id": "9377674e-b7fe-49f6-8fa5-127f6c136ada",
+      "score": 0.9256,
+      "excerpt": "Company Data Retention Policy Customer personal identification data must be retained for at least 7 years pursuant to regulatory requirements."
     }
   ],
+  "model_name": "llama3:latest"
+}
+```
+
+**Sample 200 OK Response (Insufficient Evidence / Unsupported Question):**
+```json
+{
+  "question": "What is the company policy on bringing dogs into the office?",
+  "answer": "I couldn't find sufficient information in the available knowledge base to answer this question reliably.",
+  "confidence": "none",
+  "confidence_score": 0.0,
+  "reason": "INSUFFICIENT_EVIDENCE",
+  "sources": [],
   "model_name": "llama3:latest"
 }
 ```
@@ -316,7 +313,7 @@ All errors adhere to a structured, consistent format with request tracing:
 ## Running Automated Tests
 
 ```bash
-# Run full test suite (66 tests)
+# Run full test suite (76 tests)
 .venv/bin/pytest -v
 
 # Run with test coverage
@@ -346,7 +343,10 @@ docker compose exec backend pytest -v
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama service HTTP endpoint |
 | `RAG_DEFAULT_TOP_K` | `4` | Default number of retrieved chunks |
 | `RAG_DEFAULT_SIMILARITY_THRESHOLD` | `0.45` | Minimum cosine similarity threshold |
+| `RAG_HIGH_CONFIDENCE_THRESHOLD` | `0.75` | Minimum score for high confidence |
+| `RAG_MEDIUM_CONFIDENCE_THRESHOLD` | `0.55` | Minimum score for medium confidence |
 | `RAG_MAX_CONTEXT_CHARS` | `8000` | Context token/char limit |
+| `RAG_EXCERPT_MAX_CHARS` | `250` | Character limit for source citation excerpts |
 | `POSTGRES_SERVER` | `localhost` (or `db`) | PostgreSQL hostname |
 | `POSTGRES_PORT` | `5433` (or `5432`) | PostgreSQL port |
 | `POSTGRES_USER` | `postgres` | Database username |
@@ -364,7 +364,7 @@ docker compose exec backend pytest -v
 - [x] **Phase 2: Document Ingestion Pipeline** (PDF/DOCX/TXT/MD, Duplicate Detection, Chunking, DB Persistence)
 - [x] **Phase 3: Embeddings & Vector Database** (Local FastEmbed, pgvector HNSW Indexing, Semantic Search)
 - [x] **Phase 4: Retrieval-Augmented Generation** (Query Processing, Ollama/OpenAI Abstractions, Grounded QA, Source Citations, Eval Dataset)
-- [ ] **Phase 5: Generation Quality, Hallucination Prevention & "I don't know" Logic**
-- [ ] **Phase 6: Faithfulness Verification & Quality Checks**
+- [x] **Phase 5: Evidence-Based Answering & Source Citations** (Traceable Citations, Explainable Confidence Scoring, Machine-Readable Refusals, Excerpt Extraction)
+- [ ] **Phase 6: Answer Faithfulness Verification & Hallucination Prevention**
 - [ ] **Phase 7: Ragas Evaluation & Telemetry Dashboard**
 - [ ] **Phase 8: Frontend Knowledge Assistant UI**

@@ -67,13 +67,17 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_API_BASE_URL: str = "https://api.openai.com/v1"
 
-    # RAG Orchestration
+    # RAG Orchestration & Evidence Sufficiency
     RAG_FALLBACK_RESPONSE: str = (
-        "Based on the provided documentation, I do not have enough information to answer this question."
+        "I couldn't find sufficient information in the available knowledge base to answer this question reliably."
     )
+    RAG_INSUFFICIENT_EVIDENCE_REASON: str = "INSUFFICIENT_EVIDENCE"
     RAG_DEFAULT_TOP_K: int = 4
     RAG_DEFAULT_SIMILARITY_THRESHOLD: float = 0.45
+    RAG_HIGH_CONFIDENCE_THRESHOLD: float = 0.75
+    RAG_MEDIUM_CONFIDENCE_THRESHOLD: float = 0.55
     RAG_MAX_CONTEXT_CHARS: int = 8000
+    RAG_EXCERPT_MAX_CHARS: int = 250
 
     # CORS
     ALLOWED_ORIGINS: Union[List[str], str] = ["*"]

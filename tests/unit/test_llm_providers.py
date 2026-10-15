@@ -31,7 +31,10 @@ async def test_mock_llm_unavailable_answer():
         context=context,
     )
     response = await provider.agenerate(prompt)
-    assert "not have enough information" in response.content.lower()
+    assert (
+        "not have enough information" in response.content.lower()
+        or "sufficient information" in response.content.lower()
+    )
 
 
 @pytest.mark.asyncio

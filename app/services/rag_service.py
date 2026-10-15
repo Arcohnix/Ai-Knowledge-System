@@ -108,5 +108,6 @@ class RAGService:
             question=processed_query.cleaned_query,
             answer=llm_response.content,
             evidence_chunks=context.included_chunks,
+            query_keywords=processed_query.keywords,
             model_name=llm_response.model_name,
         )

@@ -30,47 +30,103 @@ class AskRequest(BaseModel):
     )
 
 
-class AskSourceDocument(BaseModel):
-    """Metadata describing the originating source document."""
+class SourceCitation(BaseModel):
+    """
+    Structured citation pointing directly to the retrieved knowledge chunk.
+    Guarantees every factual assertion is traceable to its source document and version.
+    """
 
-    document_id: str = Field(..., description="Unique document UUID")
-    title: Optional[str] = Field(None, description="Title of the document")
-    filename: str = Field(..., description="Original filename")
-    document_type: str = Field(..., description="Document type (pdf, docx, etc.)")
-    source: Optional[str] = Field("upload", description="Source channel")
-    version: Optional[str] = Field("1.0", description="Document version")
-
-
-class AskSourceChunk(BaseModel):
-    """Specific chunk used as retrieved evidence."""
-
-    chunk_id: str = Field(..., description="Unique chunk UUID")
-    chunk_index: int = Field(..., description="0-indexed position within document")
-    content: str = Field(..., description="Text content of the chunk")
-    metadata: Dict[str, Any] = Field(
-        default_factory=dict, description="Chunk-level metadata"
+    document: str = Field(
+        ...,
+        description="Document filename or display name",
+        examples=["employee_handbook.pdf"],
     )
-
-
-class AskSource(BaseModel):
-    """Attributed source citation linking chunk evidence to its parent document."""
-
-    document: AskSourceDocument
-    chunk: AskSourceChunk
-    relevance_score: float = Field(
-        ..., description="Cosine similarity score of the retrieved chunk"
+    version: str = Field(
+        default="1.0",
+        description="Version identifier of the originating document",
+        examples=["2026.1", "1.0"],
+    )
+    chunk_id: str = Field(
+        ...,
+        description="Unique UUID identifying the source chunk",
+        examples=["9377674e-b7fe-49f6-8fa5-127f6c136ada"],
+    )
+    score: float = Field(
+        ...,
+        description="Cosine similarity relevance score between query and chunk",
+        examples=[0.87],
+    )
+    excerpt: str = Field(
+        ...,
+        description="Extracted text snippet or relevant quote from the chunk",
+        examples=[
+            "Customer personal identification data must be retained for at least 7 years pursuant to regulatory requirements."
+        ],
+    )
+    chunk_index: Optional[int] = Field(
+        default=None,
+        description="0-indexed position of chunk within the document",
+    )
+    document_id: Optional[str] = Field(
+        default=None,
+        description="UUID of the parent document entity",
     )
 
 
 class AskResponse(BaseModel):
-    """Unified response containing the synthesized answer and source citations."""
+    """
+    Unified question-answering response containing synthesized answer,
+    calculated confidence level, optional machine-readable refusal reason, and structured source citations.
+    """
 
     question: str = Field(..., description="The original normalized question")
-    answer: str = Field(..., description="Synthesized answer or explanation of unavailable context")
-    sources: List[AskSource] = Field(
+    answer: str = Field(
+        ...,
+        description="Synthesized grounded answer or controlled refusal when evidence is insufficient",
+    )
+    confidence: str = Field(
+        ...,
+        description="Calculated confidence level: 'high', 'medium', 'low', or 'none'",
+        examples=["high", "medium", "low", "none"],
+    )
+    confidence_score: float = Field(
+        default=0.0,
+        description="Deterministic composite confidence score (0.0 to 1.0) derived from retrieval and lexical coverage",
+        examples=[0.87],
+    )
+    reason: Optional[str] = Field(
+        default=None,
+        description="Machine-readable status code when question cannot be answered (e.g. 'INSUFFICIENT_EVIDENCE')",
+        examples=["INSUFFICIENT_EVIDENCE"],
+    )
+    sources: List[SourceCitation] = Field(
         default_factory=list,
-        description="List of retrieved evidence chunks with attribution and relevance scores",
+        description="Structured source citations used to generate the answer",
     )
     model_name: Optional[str] = Field(
-        None, description="LLM model used for synthesis"
+        default=None,
+        description="LLM model used for synthesis",
     )
+
+
+# Backwards compatibility models
+class AskSourceDocument(BaseModel):
+    document_id: str
+    title: Optional[str] = None
+    filename: str
+    document_type: str
+    source: Optional[str] = "upload"
+    version: Optional[str] = "1.0"
+
+
+class AskSourceChunk(BaseModel):
+    chunk_id: str
+    chunk_index: int
+    content: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AskSource(BaseModel):
+    document: AskSourceDocument
+    chunk: AskSourceChunk
+    relevance_score: float

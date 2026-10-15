@@ -1,3 +1,4 @@
+from app.services.confidence_service import ConfidenceResult, ConfidenceScorer
 from app.services.context_service import ContextConstructionService
 from app.services.generation_service import LLMGenerationService
 from app.services.health_service import HealthService
@@ -16,4 +17,6 @@ __all__ = [
     "LLMGenerationService",
     "ResponseFormattingService",
     "RAGService",
+    "ConfidenceScorer",
+    "ConfidenceResult",
 ]
