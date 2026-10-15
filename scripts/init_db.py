@@ -54,6 +54,22 @@ async def initialize_database() -> None:
             except Exception as e:
                 logger.warning(f"Embedding column verification note: {e}")
 
+            # Ensure document lifecycle columns exist on documents table
+            try:
+                await conn.execute(text(
+                    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'ACTIVE' NOT NULL;"
+                ))
+                await conn.execute(text(
+                    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS effective_date DATE;"
+                ))
+                await conn.execute(text(
+                    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS expiration_date DATE;"
+                ))
+                logger.info("Verified/added document status and date columns on documents.")
+            except Exception as e:
+                logger.warning(f"Document lifecycle columns verification note: {e}")
+
+
             # Create HNSW vector index for pgvector
             try:
                 await conn.execute(text(

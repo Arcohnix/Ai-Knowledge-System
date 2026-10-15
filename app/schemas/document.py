@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
@@ -32,6 +32,9 @@ class DocumentResponse(BaseModel):
     title: str
     source: str
     version: str
+    status: str = "ACTIVE"
+    effective_date: Optional[date] = None
+    expiration_date: Optional[date] = None
     checksum: str
     metadata: Dict[str, Any] = Field(
         default_factory=dict,
@@ -41,6 +44,7 @@ class DocumentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     chunk_count: Optional[int] = None
+
 
 
 class DocumentDetailResponse(DocumentResponse):

@@ -105,9 +105,21 @@ class AnswerVerifier:
             if s.strip()
         ]
 
+        META_FRAMING_PATTERNS = [
+            r"strictly adhere to the (rules|instructions)",
+            r"based (solely )?on the provided (context|documentation)",
+            r"i (will|must) (strictly )?(adhere|follow)",
+            r"as an ai",
+            r"here is the answer based",
+        ]
+
         claims: List[str] = []
         for s in raw_sentences:
-            # Filter meta framing and conversational boilerplate
+            # Skip conversational meta-framing sentences
+            if any(re.search(p, s, flags=re.IGNORECASE) for p in META_FRAMING_PATTERNS):
+                continue
+
+            # Filter meta framing prefix and conversational boilerplate
             s_clean = re.sub(
                 r"^(based\s+(solely\s+)?on\s+the\s+provided\s+context[,\s:]*|"
                 r"according\s+to\s+[a-z0-9_\-.\s]+[,\s:]*|"
@@ -123,6 +135,7 @@ class AnswerVerifier:
                 claims.append(s_clean)
 
         return claims
+
 
     def verify_claim(self, claim: str, context_text: str) -> Tuple[bool, float, str]:
         """

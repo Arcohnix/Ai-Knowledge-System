@@ -24,9 +24,11 @@ from app.schemas.ask import (
     AskSource,
     AskSourceChunk,
     AskSourceDocument,
+    ContradictionReport,
     ReliabilityReport,
     SourceCitation,
 )
+
 
 __all__ = [
     "APIResponse",
@@ -51,4 +53,6 @@ __all__ = [
     "AskSourceDocument",
     "SourceCitation",
     "ReliabilityReport",
+    "ContradictionReport",
 ]
+

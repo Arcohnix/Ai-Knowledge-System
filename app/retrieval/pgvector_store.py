@@ -104,6 +104,17 @@ class PGVectorStore(BaseVectorStore):
                     "document_type": doc_row.document_type,
                     "source": doc_row.source,
                     "version": doc_row.version,
+                    "status": getattr(doc_row, "status", "ACTIVE"),
+                    "effective_date": (
+                        doc_row.effective_date.isoformat()
+                        if getattr(doc_row, "effective_date", None)
+                        else None
+                    ),
+                    "expiration_date": (
+                        doc_row.expiration_date.isoformat()
+                        if getattr(doc_row, "expiration_date", None)
+                        else None
+                    ),
                 }
                 retrieved.append(
                     RetrievedChunk(
@@ -154,6 +165,17 @@ class PGVectorStore(BaseVectorStore):
                     "document_type": doc_row.document_type,
                     "source": doc_row.source,
                     "version": doc_row.version,
+                    "status": getattr(doc_row, "status", "ACTIVE"),
+                    "effective_date": (
+                        doc_row.effective_date.isoformat()
+                        if getattr(doc_row, "effective_date", None)
+                        else None
+                    ),
+                    "expiration_date": (
+                        doc_row.expiration_date.isoformat()
+                        if getattr(doc_row, "expiration_date", None)
+                        else None
+                    ),
                 }
                 retrieved.append(
                     RetrievedChunk(

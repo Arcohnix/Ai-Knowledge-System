@@ -88,6 +88,14 @@ class Settings(BaseSettings):
     RAG_UNVERIFIED_REASON: str = "UNVERIFIED_CLAIMS"
     RAG_ENABLE_REGENERATION: bool = True
 
+    # Contradiction Detection & Document Version Handling (Phase 7)
+    RAG_ENABLE_CONTRADICTION_DETECTION: bool = True
+    RAG_CONFLICT_REFUSAL_RESPONSE: str = (
+        "I found conflicting information in the knowledge base and cannot determine which policy is currently authoritative."
+    )
+    RAG_CONFLICT_REASON: str = "CONFLICTING_EVIDENCE"
+
+
     # CORS
     ALLOWED_ORIGINS: Union[List[str], str] = ["*"]
 

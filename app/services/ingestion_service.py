@@ -1,6 +1,8 @@
+from datetime import date
 import hashlib
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
+
 from uuid import UUID
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -67,11 +69,15 @@ class IngestionService:
         content: bytes,
         content_type: Optional[str] = None,
         source: str = "upload",
+        version: str = "1.0",
+        status: str = "ACTIVE",
+        effective_date: Optional[date] = None,
+        expiration_date: Optional[date] = None,
         chunk_size: Optional[int] = None,
         chunk_overlap: Optional[int] = None,
     ) -> DocumentModel:
         """
-        Executes complete ingestion lifecycle.
+        Executes complete ingestion lifecycle with document lifecycle metadata.
         """
         # 1. Validation
         doc_type = await self.validate_file(filename, content, content_type)
@@ -130,8 +136,15 @@ class IngestionService:
 
         # 7. Metadata Assembly
         title = raw_doc.metadata.get("title") or os.path.splitext(filename)[0]
+        effective_str = effective_date.isoformat() if effective_date else None
+        expiration_str = expiration_date.isoformat() if expiration_date else None
+
         doc_metadata = {
             **raw_doc.metadata,
+            "version": version,
+            "status": status,
+            "effective_date": effective_str,
+            "expiration_date": expiration_str,
             "file_size_bytes": len(content),
             "character_count": len(cleaned_text),
             "chunk_count": len(chunk_splits),
@@ -142,7 +155,7 @@ class IngestionService:
             "embedding_dimension": self.embedder.embedding_dimension,
         }
 
-        # Prepare chunk records with vector embeddings
+        # Prepare chunk records with vector embeddings and lifecycle metadata
         chunks_data = [
             {
                 "chunk_index": split["chunk_index"],
@@ -154,6 +167,11 @@ class IngestionService:
                     "start_char": split["start_char"],
                     "end_char": split["end_char"],
                     "document_title": title,
+                    "filename": filename,
+                    "version": version,
+                    "status": status,
+                    "effective_date": effective_str,
+                    "expiration_date": expiration_str,
                 },
             }
             for split, emb in zip(chunk_splits, chunk_embeddings)
@@ -164,7 +182,10 @@ class IngestionService:
             "document_type": doc_type,
             "title": title,
             "source": source,
-            "version": "1.0",
+            "version": version,
+            "status": status,
+            "effective_date": effective_date,
+            "expiration_date": expiration_date,
             "checksum": checksum,
             "doc_metadata": doc_metadata,
         }
@@ -172,10 +193,11 @@ class IngestionService:
         # 8. Persistence (Document + Vector-indexed Chunks)
         created_doc = await self.repository.create_with_chunks(document_fields, chunks_data)
         logger.info(
-            f"Successfully ingested document '{filename}' (ID: {created_doc.id}, Chunks: {len(chunks_data)}, Size: {len(content)} bytes)"
+            f"Successfully ingested document '{filename}' (ID: {created_doc.id}, Version: {version}, Status: {status}, Chunks: {len(chunks_data)}, Size: {len(content)} bytes)"
         )
 
         return created_doc
+
 
     async def list_documents(
         self,

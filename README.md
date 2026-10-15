@@ -10,20 +10,24 @@ An internal enterprise knowledge assistant designed to answer questions reliably
 
 ---
 
-## Project Status: Phase 6 (Answer Reliability and Hallucination Detection)
+## Project Status: Phase 7 (Contradictory Knowledge and Document Version Handling)
 
 > [!NOTE]
-> This repository is currently on **Phase 6: Answer Reliability and Hallucination Detection**.
+> This repository is currently on **Phase 7: Contradictory Knowledge and Document Version Handling**.
 >
-> The system replaces naive RAG with a multi-stage audited verification pipeline:
-> `Question -> Retrieval -> EvidenceEvaluator (Pre-gen Gate) -> LLM -> AnswerVerifier (Post-gen Audit) -> ReliabilityDecisionEngine (Accept / Regenerate / Refuse) -> Audited Final Answer`.
+> The system detects potentially contradictory retrieved evidence (`AGREE`, `PARTIALLY_CONFLICT`, `CONFLICT`), supports document lifecycle versioning (`ACTIVE`, `SUPERSEDED`, `EXPIRED`, `effective_date`, `expiration_date`), and implements deterministic conflict resolution rules (status precedence, temporal validity, and version precedence).
 >
-> It detects ungrounded claims, catches numeric and conceptual hallucinations, attempts corrective regeneration with negative constraints, and prefers refusing with `"I don't have enough reliable information to answer this."` over outputting a plausible hallucination.
+> **Critical Governance Guarantee**: The system **never** silently chooses one contradictory document merely because it has a higher vector similarity score. If a direct contradiction cannot be safely resolved, it explicitly alerts the user with `"I found conflicting information in the knowledge base and cannot determine which policy is currently authoritative."` while surfacing the competing sources for auditability.
 
 ---
 
 ## Key Features
 
+- **Contradiction Analysis Engine**: Pairwise semantic analysis across retrieved chunks detecting numeric discrepancies, polarity mismatches, and schedule divergences.
+- **Deterministic Conflict Resolution**: Multi-tier resolution preferring `ACTIVE` over `SUPERSEDED`/`EXPIRED`, effective dates over lapsed dates, and newer versions over older versions.
+- **Anti-Vector Trap Guarding**: Strictly forbids picking a contradictory document simply due to high vector cosine similarity or keyword stuffing.
+- **Explicit Conflict Transparency**: Surfaces conflicting source citations and structured `ContradictionReport` diagnostic details whenever unresolvable policy conflicts exist.
+- **Document Lifecycle Metadata**: Full tracking of `version`, `status` (`ACTIVE`, `SUPERSEDED`, `EXPIRED`), `effective_date`, and `expiration_date`.
 - **Multi-Stage Reliability Pipeline**: Full verification lifecycle featuring `EvidenceEvaluator`, `AnswerVerifier`, and `ReliabilityDecisionEngine`.
 - **Pre-Generation Evidence Gating**: Inspects retrieval density, similarity thresholds, and query keyword coverage before invoking LLM generation, short-circuiting unsupported queries to `INSUFFICIENT_EVIDENCE`.
 - **Post-Generation Claim Verification**: Decomposes answers into discrete factual claims and checks quantitative, numeric, and conceptual alignment against source documents.
@@ -35,9 +39,10 @@ An internal enterprise knowledge assistant designed to answer questions reliably
 - **Provider-Agnostic LLM Interface**: Local Ollama (`llama3:latest`), OpenAI-compatible remote gateways, and Mock testing providers.
 - **Dense Vector Search**: PostgreSQL + `pgvector` with HNSW indexing and FastEmbed ONNX local models.
 - **Multi-Format Ingestion**: Native parsing for PDF, DOCX, TXT, and Markdown with SHA-256 deduplication.
-- **Comprehensive Pytest Suite**: 100 unit and adversarial integration tests passing both on host and in Docker container.
+- **Comprehensive Pytest Suite**: 115 unit, integration, adversarial, and contradiction tests passing both on host and in Docker container.
 
 ---
+
 
 
 ## Architecture Overview

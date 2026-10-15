@@ -1,12 +1,22 @@
+from datetime import date
+from enum import Enum
 import uuid
 from typing import Any, Dict, List, Optional
-from sqlalchemy import ForeignKey, Integer, String, Text, JSON
+from sqlalchemy import Date, ForeignKey, Integer, String, Text, JSON
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from pgvector.sqlalchemy import Vector
 from app.core.config import settings
 from app.core.database import Base
 from app.models.base import TimestampMixin, UUIDMixin
+
+
+class DocumentStatus(str, Enum):
+    """Lifecycle status of an ingested enterprise document."""
+
+    ACTIVE = "ACTIVE"
+    SUPERSEDED = "SUPERSEDED"
+    EXPIRED = "EXPIRED"
 
 
 class DocumentModel(Base, UUIDMixin, TimestampMixin):
@@ -21,8 +31,17 @@ class DocumentModel(Base, UUIDMixin, TimestampMixin):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     source: Mapped[str] = mapped_column(String(255), nullable=False, default="upload")
     version: Mapped[str] = mapped_column(String(50), nullable=False, default="1.0")
+    status: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        default=DocumentStatus.ACTIVE.value,
+        index=True,
+    )
+    effective_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True, index=True)
+    expiration_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True, index=True)
     checksum: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
     doc_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+
 
     # One-to-many relationship with chunks
     chunks: Mapped[List["DocumentChunkModel"]] = relationship(

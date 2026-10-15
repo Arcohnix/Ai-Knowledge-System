@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
@@ -19,7 +20,7 @@ router = APIRouter()
     response_model=DocumentResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Ingest a document",
-    description="Validates, parses, cleans, chunks, and persists a document (PDF, DOCX, TXT, Markdown).",
+    description="Validates, parses, cleans, chunks, and persists a document (PDF, DOCX, TXT, Markdown) with version lifecycle metadata.",
     responses={
         201: {"description": "Document parsed and indexed successfully"},
         400: {"description": "Invalid file format or empty payload"},
@@ -29,6 +30,10 @@ router = APIRouter()
 )
 async def upload_document(
     file: UploadFile = File(..., description="Document file to ingest (PDF, DOCX, TXT, MD)"),
+    version: str = Form("1.0", description="Document version identifier (e.g. '1.0', '2026.1')"),
+    status_val: str = Form("ACTIVE", alias="status", description="Lifecycle status: ACTIVE, SUPERSEDED, or EXPIRED"),
+    effective_date: Optional[date] = Form(None, description="Optional policy effective date (YYYY-MM-DD)"),
+    expiration_date: Optional[date] = Form(None, description="Optional policy expiration date (YYYY-MM-DD)"),
     chunk_size: Optional[int] = Query(
         None, ge=50, le=4000, description="Optional override for chunk character length"
     ),
@@ -39,7 +44,7 @@ async def upload_document(
     db: AsyncSession = Depends(get_db),
 ) -> DocumentResponse:
     """
-    Ingests an uploaded document into structured text chunks.
+    Ingests an uploaded document into structured text chunks with version and lifecycle status.
     """
     file_bytes = await file.read()
     service = IngestionService(db)
@@ -49,6 +54,10 @@ async def upload_document(
         content=file_bytes,
         content_type=file.content_type,
         source=source,
+        version=version,
+        status=status_val.upper(),
+        effective_date=effective_date,
+        expiration_date=expiration_date,
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
     )
@@ -56,6 +65,7 @@ async def upload_document(
     doc_response = DocumentResponse.model_validate(doc)
     doc_response.chunk_count = len(doc.chunks)
     return doc_response
+
 
 
 @router.get(

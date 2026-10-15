@@ -105,17 +105,54 @@ class ReliabilityReport(BaseModel):
     )
 
 
+class ContradictionReport(BaseModel):
+    """
+    Audited outcome of contradiction analysis across retrieved evidence chunks.
+    Detects whether evidence sources agree, partially conflict, or directly conflict,
+    and documents whether the conflict was deterministically resolved via document versioning
+    or lifecycle precedence.
+    """
+
+    status: str = Field(
+        ...,
+        description="Contradiction status: 'AGREE', 'PARTIALLY_CONFLICT', or 'CONFLICT'",
+        examples=["AGREE", "CONFLICT"],
+    )
+    has_conflict: bool = Field(
+        ...,
+        description="True if factual discrepancies or policy divergence were detected across sources",
+    )
+    claims: List[str] = Field(
+        default_factory=list,
+        description="Extracted factual claims evaluated across retrieved sources",
+    )
+    conflicting_sources: List[str] = Field(
+        default_factory=list,
+        description="Document filenames or identifiers involved in factual conflict",
+        examples=[["vacation_policy_2024.docx", "vacation_policy_2026.docx"]],
+    )
+    resolution_status: Optional[str] = Field(
+        default=None,
+        description="Resolution status: 'NO_CONFLICT', 'RESOLVED_BY_ACTIVE_STATUS', 'RESOLVED_BY_EFFECTIVE_DATE', 'RESOLVED_BY_NEWER_VERSION', or 'UNRESOLVED'",
+        examples=["RESOLVED_BY_ACTIVE_STATUS", "UNRESOLVED"],
+    )
+    resolution_rationale: Optional[str] = Field(
+        default=None,
+        description="Detailed rationale explaining how conflict was resolved or why it was refused",
+    )
+
+
 class AskResponse(BaseModel):
     """
     Unified question-answering response containing synthesized answer,
     calculated confidence level, optional machine-readable refusal reason, structured source citations,
-    and faithfulness reliability audit report.
+    faithfulness reliability audit report, and contradiction/version analysis.
     """
 
     question: str = Field(..., description="The original normalized question")
     answer: str = Field(
         ...,
-        description="Synthesized grounded answer or controlled refusal when evidence is insufficient",
+        description="Synthesized grounded answer or controlled refusal when evidence is insufficient or contradictory",
     )
     confidence: str = Field(
         ...,
@@ -129,21 +166,26 @@ class AskResponse(BaseModel):
     )
     reason: Optional[str] = Field(
         default=None,
-        description="Machine-readable status code when question cannot be answered (e.g. 'INSUFFICIENT_EVIDENCE')",
-        examples=["INSUFFICIENT_EVIDENCE", "UNVERIFIED_CLAIMS"],
+        description="Machine-readable status code when question cannot be answered (e.g. 'INSUFFICIENT_EVIDENCE', 'CONFLICTING_EVIDENCE')",
+        examples=["INSUFFICIENT_EVIDENCE", "UNVERIFIED_CLAIMS", "CONFLICTING_EVIDENCE"],
     )
     sources: List[SourceCitation] = Field(
         default_factory=list,
-        description="Structured source citations used to generate the answer",
+        description="Structured source citations used to generate the answer or conflicting sources",
     )
     reliability: Optional[ReliabilityReport] = Field(
         default=None,
         description="Faithfulness verification and reliability decision report",
     )
+    contradiction: Optional[ContradictionReport] = Field(
+        default=None,
+        description="Contradiction analysis and version resolution report",
+    )
     model_name: Optional[str] = Field(
         default=None,
         description="LLM model used for synthesis",
     )
+
 
 
 # Backwards compatibility models

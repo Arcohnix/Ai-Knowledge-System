@@ -1,5 +1,11 @@
 from app.services.confidence_service import ConfidenceResult, ConfidenceScorer
 from app.services.context_service import ContextConstructionService
+from app.services.contradiction_service import (
+    ConflictResolutionAction,
+    ContradictionAnalysisResult,
+    ContradictionService,
+    ContradictionStatus,
+)
 from app.services.generation_service import LLMGenerationService
 from app.services.health_service import HealthService
 from app.services.ingestion_service import IngestionService
@@ -19,4 +25,9 @@ __all__ = [
     "RAGService",
     "ConfidenceScorer",
     "ConfidenceResult",
+    "ContradictionService",
+    "ContradictionStatus",
+    "ConflictResolutionAction",
+    "ContradictionAnalysisResult",
 ]
+

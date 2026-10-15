@@ -10,6 +10,10 @@ from app.generation.factory import get_llm_provider
 from app.ingestion.base import BaseEmbedder
 from app.schemas.ask import AskResponse, ReliabilityReport
 from app.services.context_service import ContextConstructionService
+from app.services.contradiction_service import (
+    ContradictionService,
+    ContradictionStatus,
+)
 from app.services.generation_service import LLMGenerationService
 from app.services.query_service import QueryProcessingService
 from app.services.response_formatting_service import ResponseFormattingService
@@ -21,7 +25,8 @@ logger = get_logger(__name__)
 class RAGService:
     """
     Coordinator service orchestrating the multi-stage reliable question answering pipeline:
-    Query Processing -> Evidence Retrieval -> Evidence Sufficiency Evaluation -> Context Construction
+    Query Processing -> Evidence Retrieval -> Evidence Sufficiency Evaluation
+    -> Contradiction Analysis & Document Version Resolution -> Context Construction
     -> LLM Generation -> Faithfulness Verification -> Reliability Decision (Accept/Regenerate/Refuse)
     -> Audited Response Formatting.
     """
@@ -39,6 +44,7 @@ class RAGService:
         evidence_evaluator: Optional[EvidenceEvaluator] = None,
         answer_verifier: Optional[AnswerVerifier] = None,
         reliability_engine: Optional[ReliabilityDecisionEngine] = None,
+        contradiction_service: Optional[ContradictionService] = None,
     ):
         self.session = session
         self.query_processor = query_processor or QueryProcessingService()
@@ -58,6 +64,9 @@ class RAGService:
         self.reliability_engine = (
             reliability_engine or ReliabilityDecisionEngine()
         )
+        self.contradiction_service = (
+            contradiction_service or ContradictionService()
+        )
 
     async def answer_question(
         self,
@@ -68,7 +77,7 @@ class RAGService:
     ) -> AskResponse:
         """
         Executes the full RAG pipeline for a given user question with pre-generation
-        evidence evaluation and post-generation faithfulness verification.
+        evidence evaluation, contradiction & version analysis, and post-generation faithfulness verification.
         """
         k = top_k or settings.RAG_DEFAULT_TOP_K
         threshold = (
@@ -118,8 +127,31 @@ class RAGService:
                 reliability=reliability_report,
             )
 
-        # Step 4: Context Construction
-        context = self.context_builder.build_context(retrieved_chunks)
+        # Step 4: Contradiction Analysis & Document Version Resolution
+        contradiction_result = self.contradiction_service.analyze_and_resolve(
+            retrieved_chunks=retrieved_chunks,
+        )
+
+        if (
+            contradiction_result.status == ContradictionStatus.CONFLICT
+            and not contradiction_result.is_resolved
+        ):
+            logger.warning(
+                f"Unresolved factual conflict detected across sources: {contradiction_result.conflicting_sources}. "
+                "Refusing ambiguous answer generation."
+            )
+            return self.response_formatter.format_conflict_response(
+                question=processed_query.cleaned_query,
+                conflicting_chunks=contradiction_result.conflicting_chunks or retrieved_chunks,
+                contradiction_report=contradiction_result.to_report(),
+                query_keywords=processed_query.keywords,
+                model_name=self.llm_provider.model_name,
+            )
+
+        evidence_chunks = contradiction_result.resolved_chunks or retrieved_chunks
+
+        # Step 5: Context Construction
+        context = self.context_builder.build_context(evidence_chunks)
 
         if not context.has_context:
             logger.info("Context builder produced empty context; returning fallback response.")
@@ -136,16 +168,17 @@ class RAGService:
                 custom_message=settings.RAG_FALLBACK_RESPONSE,
                 reason=settings.RAG_INSUFFICIENT_EVIDENCE_REASON,
                 reliability=reliability_report,
+                contradiction=contradiction_result.to_report(),
             )
 
-        # Step 5: LLM Generation (Initial Attempt)
+        # Step 6: LLM Generation (Initial Attempt)
         llm_response = await self.generation_service.generate_answer(
             question=processed_query.cleaned_query,
             context=context,
         )
         current_answer = llm_response.content
 
-        # Step 6: Post-generation Faithfulness Verification & Reliability Decision
+        # Step 7: Post-generation Faithfulness Verification & Reliability Decision
         verification = self.answer_verifier.verify_answer(
             answer=current_answer,
             context_text=context.context_text,
@@ -157,7 +190,7 @@ class RAGService:
             regeneration_attempt=0,
         )
 
-        # Step 7: Optional Regeneration if unsupported claims detected
+        # Step 8: Optional Regeneration if unsupported claims detected
         if decision.action == DecisionAction.REGENERATE:
             logger.warning(
                 f"Reliability engine triggered REGENERATE. Prompting LLM with negative constraints. "
@@ -197,7 +230,7 @@ class RAGService:
             reason=decision.reason,
         )
 
-        # Step 8: Response Formatting
+        # Step 9: Response Formatting
         return self.response_formatter.format_response(
             question=processed_query.cleaned_query,
             answer=decision.final_answer,
@@ -205,4 +238,6 @@ class RAGService:
             query_keywords=processed_query.keywords,
             model_name=llm_response.model_name,
             reliability=reliability_report,
+            contradiction=contradiction_result.to_report(),
         )
+

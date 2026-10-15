@@ -3,7 +3,12 @@ from typing import List, Optional
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.retrieval.base import RetrievedChunk
-from app.schemas.ask import AskResponse, ReliabilityReport, SourceCitation
+from app.schemas.ask import (
+    AskResponse,
+    ContradictionReport,
+    ReliabilityReport,
+    SourceCitation,
+)
 from app.services.confidence_service import ConfidenceResult, ConfidenceScorer
 
 logger = get_logger(__name__)
@@ -55,7 +60,8 @@ def extract_relevant_excerpt(
 class ResponseFormattingService:
     """
     Service responsible for packaging pipeline outputs into structured, audited API response contracts.
-    Computes deterministic confidence levels, extracts source excerpts, and formats machine-readable reasons.
+    Computes deterministic confidence levels, extracts source excerpts, surfaces conflicting sources,
+    and formats machine-readable reasons.
     """
 
     def __init__(self, confidence_scorer: Optional[ConfidenceScorer] = None):
@@ -69,6 +75,7 @@ class ResponseFormattingService:
         query_keywords: Optional[List[str]] = None,
         model_name: Optional[str] = None,
         reliability: Optional[ReliabilityReport] = None,
+        contradiction: Optional[ContradictionReport] = None,
     ) -> AskResponse:
         """
         Formats question, synthesized answer, calculated confidence, and source citations.
@@ -99,6 +106,7 @@ class ResponseFormattingService:
                 reason=settings.RAG_UNVERIFIED_REASON,
                 sources=[],
                 reliability=reliability,
+                contradiction=contradiction,
                 model_name=model_name,
             )
 
@@ -106,6 +114,7 @@ class ResponseFormattingService:
         is_refusal = (
             settings.RAG_FALLBACK_RESPONSE.lower() in cleaned_answer.lower()
             or settings.RAG_UNVERIFIED_REFUSAL_RESPONSE.lower() in cleaned_answer.lower()
+            or settings.RAG_CONFLICT_REFUSAL_RESPONSE.lower() in cleaned_answer.lower()
             or "not have enough information" in cleaned_answer.lower()
             or "information is unavailable" in cleaned_answer.lower()
             or "couldn't find sufficient information" in cleaned_answer.lower()
@@ -141,6 +150,7 @@ class ResponseFormattingService:
                 reason=settings.RAG_INSUFFICIENT_EVIDENCE_REASON,
                 sources=[],
                 reliability=refusal_reliability,
+                contradiction=contradiction,
                 model_name=model_name,
             )
 
@@ -181,6 +191,59 @@ class ResponseFormattingService:
             reason=None,
             sources=sources,
             reliability=accepted_reliability,
+            contradiction=contradiction,
+            model_name=model_name,
+        )
+
+    def format_conflict_response(
+        self,
+        question: str,
+        conflicting_chunks: List[RetrievedChunk],
+        contradiction_report: Optional[ContradictionReport] = None,
+        query_keywords: Optional[List[str]] = None,
+        model_name: Optional[str] = None,
+    ) -> AskResponse:
+        """
+        Formats a controlled response when unresolvable contradictory evidence is detected.
+        Presents the standard conflict message while surfacing the conflicting sources.
+        """
+        sources: List[SourceCitation] = []
+        for chunk in conflicting_chunks:
+            meta = chunk.metadata or {}
+            doc_name = meta.get("filename") or meta.get("document_title") or "Unknown Document"
+            doc_version = str(meta.get("version") or "1.0")
+            score = round(chunk.score if chunk.score is not None else 0.0, 4)
+            excerpt = extract_relevant_excerpt(chunk.content, query_keywords)
+
+            sources.append(
+                SourceCitation(
+                    document=doc_name,
+                    version=doc_version,
+                    chunk_id=chunk.chunk_id,
+                    score=score,
+                    excerpt=excerpt,
+                    chunk_index=meta.get("chunk_index"),
+                    document_id=chunk.document_id,
+                )
+            )
+
+        reliability = ReliabilityReport(
+            status="REFUSE",
+            faithfulness_score=0.0,
+            supported=False,
+            unsupported_claims=[],
+            reason="Refused to answer: unresolvable direct conflict between knowledge documents.",
+        )
+
+        return AskResponse(
+            question=question,
+            answer=settings.RAG_CONFLICT_REFUSAL_RESPONSE,
+            confidence="low",
+            confidence_score=0.0,
+            reason=settings.RAG_CONFLICT_REASON,
+            sources=sources,
+            reliability=reliability,
+            contradiction=contradiction_report,
             model_name=model_name,
         )
 
@@ -191,6 +254,7 @@ class ResponseFormattingService:
         custom_message: Optional[str] = None,
         reason: Optional[str] = None,
         reliability: Optional[ReliabilityReport] = None,
+        contradiction: Optional[ContradictionReport] = None,
     ) -> AskResponse:
         """
         Formats controlled response when retrieval yielded 0 chunks or chunks below similarity threshold.
@@ -213,5 +277,7 @@ class ResponseFormattingService:
             reason=refusal_reason,
             sources=[],
             reliability=reliability_report,
+            contradiction=contradiction,
             model_name=model_name,
         )
+
