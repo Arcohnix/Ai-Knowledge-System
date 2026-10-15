@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "text"  # 'text' or 'json'
 
+    # Ingestion & Chunking
+    DEFAULT_CHUNK_SIZE: int = 500
+    DEFAULT_CHUNK_OVERLAP: int = 50
+    MAX_FILE_SIZE_BYTES: int = 25 * 1024 * 1024  # 25 MB
+    SUPPORTED_DOCUMENT_TYPES: List[str] = ["pdf", "docx", "txt", "md", "markdown"]
+
     # CORS
     ALLOWED_ORIGINS: Union[List[str], str] = ["*"]
 

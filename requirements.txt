@@ -11,6 +11,9 @@ asyncpg>=0.29.0
 psycopg[binary]>=3.2.0
 alembic>=1.13.0
 
-# Utilities & Networking
+# Utilities, Networking & File Ingestion
 httpx>=0.27.0
 python-dotenv>=1.0.1
+python-multipart>=0.0.12
+pypdf>=5.0.0
+python-docx>=1.1.2

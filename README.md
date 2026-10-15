@@ -13,26 +13,23 @@ An internal enterprise knowledge assistant designed to answer questions reliably
 ## Project Status: Phase 1 (Foundation)
 
 > [!NOTE]
-> This repository is currently in **Phase 1: Project Foundation**.
+> This repository is currently on **Phase 2: Document Ingestion Pipeline**.
 >
-> Core infrastructure, clean layered architecture, database connectivity, Docker orchestration, abstract component contracts (LLM, Vector Store, Ingestion, Evaluation), and health endpoints are operational. **No RAG functionality is implemented yet.**
+> Core foundation and document ingestion are operational: files (PDF, DOCX, TXT, Markdown) are validated, parsed, cleaned, intelligently chunked, and stored with rich metadata and duplicate detection. **No embeddings or vector search implemented yet.**
 
 ---
 
-## Key Features (Phase 1)
+## Key Features
 
+- **Multi-Format Ingestion**: Native parsing support for **PDF** (`pypdf`), **DOCX** (`python-docx`), **Plain Text** (`.txt`), and **Markdown** (`.md`).
+- **Duplicate Document Detection**: SHA-256 content hashing blocks duplicate uploads with a structured 409 Conflict response.
+- **Sensible Structural Chunking**: Recursive hierarchical chunking respecting markdown headings, paragraph breaks (`\n\n`), sentence boundaries, and words with configurable `chunk_size` and `chunk_overlap`.
+- **Text Normalization & Cleaning**: Strips null bytes, non-printable control codes, normalizes Unicode (NFKC), and standardizes line breaks.
+- **Relational Persistence**: PostgreSQL tables for `documents` and `document_chunks` with cascade deletion, indexed foreign keys, and JSON metadata.
 - **Clean Layered Architecture**: Strictly separated presentation (`api`), domain logic (`services`), data access (`repositories`), and core infrastructure (`core`).
 - **Pluggable AI Abstractions**: Abstract Base Classes ready for swappable LLM providers (Ollama / OpenAI / Claude / Gemini), Vector Stores (pgvector / Chroma / Qdrant), Document Parsers, and Evaluators.
-- **Async SQLAlchemy 2.0 & PostgreSQL**: Modern async connection pooling (`asyncpg`), metadata models, and Alembic migrations.
-- **Production Observability**:
-  - Structured JSON logging for production, readable colored logs for development.
-  - Correlation IDs (`X-Request-ID`) generated or passed through on every request.
-  - Latency tracking (`X-Process-Time`) measured and returned in HTTP headers.
-- **Structured Error Handling**: Centralized exception handlers converting custom domain exceptions into standardized, consistent JSON envelopes.
-- **Health & Readiness Check**: `GET /api/v1/health` dynamically pings PostgreSQL, checks roundtrip query latency, and reports system runtime status.
-- **12-Factor Configuration**: Fully typed settings via `pydantic-settings` with zero hardcoded credentials.
-- **Dockerized Multi-Container Setup**: One-command startup orchestrating the FastAPI backend and PostgreSQL with `pgvector`.
-- **Comprehensive Pytest Suite**: Async unit and integration tests with 100% pass rate.
+- **Production Observability**: Correlation IDs (`X-Request-ID`) and request timing (`X-Process-Time`) on every request.
+- **Comprehensive Pytest Suite**: 41 unit and integration tests passing both on host and inside Docker container.
 
 ---
 
@@ -190,18 +187,69 @@ Returns service root information and discovery links.
 }
 ```
 
+### `POST /api/v1/documents`
+Ingests an uploaded document (`multipart/form-data`). Supported formats: `.pdf`, `.docx`, `.txt`, `.md`, `.markdown`.
+
+**Parameters:**
+- `file`: UploadFile (required)
+- `chunk_size`: int (optional, default: 500)
+- `chunk_overlap`: int (optional, default: 50)
+- `source`: str (optional, default: "upload")
+
+**Sample 201 Created Response:**
+```json
+{
+  "document_id": "18c6e5d8-5fef-4219-b323-8a58bb336b0e",
+  "filename": "security.md",
+  "document_type": "markdown",
+  "title": "Enterprise Security Architecture",
+  "source": "upload",
+  "version": "1.0",
+  "checksum": "a7cbd8f27558917f31caf45230914024165930d256f13295de3440144dcc50de",
+  "metadata": {
+    "source_type": "markdown",
+    "filename": "security.md",
+    "character_count": 218,
+    "line_count": 7,
+    "file_size_bytes": 218,
+    "chunk_count": 1
+  },
+  "created_at": "2026-10-15T16:28:48.821839Z",
+  "updated_at": "2026-10-15T16:28:48.821842Z",
+  "chunk_count": 1
+}
+```
+
+### `GET /api/v1/documents`
+Returns paginated list of ingested documents with optional `document_type` filtering.
+
+**Query Parameters:**
+- `skip`: int (default: 0)
+- `limit`: int (default: 20)
+- `document_type`: str (optional, e.g. `pdf`, `docx`, `txt`, `markdown`)
+
+### `GET /api/v1/documents/{document_id}`
+Returns document metadata alongside all extracted text chunks.
+
+### `DELETE /api/v1/documents/{document_id}`
+Deletes document and cascades deletion to all associated chunks.
+
 ### Error Responses
 All errors adhere to a structured, consistent format with request tracing:
 ```json
 {
   "success": false,
   "error": {
-    "code": "NOT_FOUND",
-    "message": "Resource not found",
-    "details": null
+    "code": "CONFLICT",
+    "message": "Duplicate document detected: 'security.md' has already been ingested.",
+    "details": {
+      "existing_document_id": "18c6e5d8-5fef-4219-b323-8a58bb336b0e",
+      "existing_filename": "security.md",
+      "checksum": "a7cbd8f27558917f31caf45230914024165930d256f13295de3440144dcc50de"
+    }
   },
-  "request_id": "713f01c8-a968-466d-97a7-58fb177241cf",
-  "timestamp": "2026-10-15T16:05:01.000000Z"
+  "request_id": "f74a3012-490f-4e04-968e-8e425c6e2ddc",
+  "timestamp": "2026-10-15T16:28:54.333628Z"
 }
 ```
 
@@ -210,11 +258,14 @@ All errors adhere to a structured, consistent format with request tracing:
 ## Running Automated Tests
 
 ```bash
-# Run full test suite
+# Run full test suite (41 tests)
 pytest -v
 
 # Run with test coverage
 pytest --cov=app tests/
+
+# Run tests inside Docker container
+docker compose exec backend pytest -v
 ```
 
 ---
@@ -227,6 +278,9 @@ pytest --cov=app tests/
 | `DEBUG` | `true` | Enables FastAPI debug mode and SQL query logging |
 | `APP_HOST_PORT` | `8001` | Host port mapped to FastAPI container in Docker Compose |
 | `DB_HOST_PORT` | `5433` | Host port mapped to PostgreSQL container in Docker Compose |
+| `DEFAULT_CHUNK_SIZE` | `500` | Target character size per text chunk |
+| `DEFAULT_CHUNK_OVERLAP`| `50` | Character overlap between consecutive chunks |
+| `MAX_FILE_SIZE_BYTES` | `26214400` | Maximum allowed file upload size (25 MB) |
 | `POSTGRES_SERVER` | `localhost` (or `db`) | PostgreSQL hostname |
 | `POSTGRES_PORT` | `5433` (or `5432`) | PostgreSQL port |
 | `POSTGRES_USER` | `postgres` | Database username |
@@ -242,7 +296,7 @@ pytest --cov=app tests/
 ## Roadmap
 
 - [x] **Phase 1: Project Foundation** (Architecture, Docker, FastAPI, PostgreSQL, Health, Abstractions, Pytest)
-- [ ] **Phase 2: Ingestion & Parsing Engine**
+- [x] **Phase 2: Document Ingestion Pipeline** (PDF/DOCX/TXT/MD, Duplicate Detection, Chunking, DB Persistence)
 - [ ] **Phase 3: Chunking & Dense Embeddings**
 - [ ] **Phase 4: Vector Store & Retrieval Pipeline**
 - [ ] **Phase 5: Generation, Hallucination Prevention & "I don't know" Logic**

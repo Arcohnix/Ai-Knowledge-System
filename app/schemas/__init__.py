@@ -1,4 +1,10 @@
 from app.schemas.common import APIResponse, ErrorDetail, ErrorResponse
+from app.schemas.document import (
+    ChunkResponse,
+    DocumentDetailResponse,
+    DocumentListResponse,
+    DocumentResponse,
+)
 from app.schemas.health import (
     DatabaseHealth,
     HealthCheckResponse,
@@ -14,4 +20,8 @@ __all__ = [
     "HealthCheckResponse",
     "HealthComponents",
     "SystemHealth",
+    "ChunkResponse",
+    "DocumentResponse",
+    "DocumentDetailResponse",
+    "DocumentListResponse",
 ]

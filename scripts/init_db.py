@@ -3,7 +3,8 @@ import sys
 import time
 from sqlalchemy import text
 from app.core.config import settings
-from app.core.database import Base, engine, ping_database
+from app.core.database import engine, ping_database
+from app.models import Base
 from app.core.logging import get_logger, setup_logging
 
 setup_logging()

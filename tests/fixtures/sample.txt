@@ -1,0 +1,7 @@
+Engineering Operations Manual
+
+Section 1: Code Review Guidelines.
+All pull requests must have at least two peer approvals before merging.
+
+Section 2: Deployment Windows.
+Production deployments are permitted Tuesday through Thursday.
