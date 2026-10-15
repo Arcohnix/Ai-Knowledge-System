@@ -57,6 +57,24 @@ class Settings(BaseSettings):
     DEFAULT_SEARCH_TOP_K: int = 5
     DEFAULT_SIMILARITY_THRESHOLD: float = 0.5
 
+    # LLM Generation
+    LLM_PROVIDER: str = "ollama"  # 'ollama', 'openai', 'mock'
+    LLM_MODEL: str = "llama3.2:latest"
+    LLM_TEMPERATURE: float = 0.0
+    LLM_MAX_TOKENS: int = 1024
+    LLM_REQUEST_TIMEOUT: float = 60.0
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OPENAI_API_KEY: Optional[str] = None
+    OPENAI_API_BASE_URL: str = "https://api.openai.com/v1"
+
+    # RAG Orchestration
+    RAG_FALLBACK_RESPONSE: str = (
+        "Based on the provided documentation, I do not have enough information to answer this question."
+    )
+    RAG_DEFAULT_TOP_K: int = 4
+    RAG_DEFAULT_SIMILARITY_THRESHOLD: float = 0.45
+    RAG_MAX_CONTEXT_CHARS: int = 8000
+
     # CORS
     ALLOWED_ORIGINS: Union[List[str], str] = ["*"]
 

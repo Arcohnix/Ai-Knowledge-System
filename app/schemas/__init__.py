@@ -18,6 +18,14 @@ from app.schemas.search import (
     SearchResultItem,
 )
 
+from app.schemas.ask import (
+    AskRequest,
+    AskResponse,
+    AskSource,
+    AskSourceChunk,
+    AskSourceDocument,
+)
+
 __all__ = [
     "APIResponse",
     "ErrorDetail",
@@ -34,4 +42,9 @@ __all__ = [
     "SearchResponse",
     "SearchResultItem",
     "DocumentSnippet",
+    "AskRequest",
+    "AskResponse",
+    "AskSource",
+    "AskSourceChunk",
+    "AskSourceDocument",
 ]

@@ -86,6 +86,18 @@ class ServiceUnavailableError(AppException):
         )
 
 
+class LLMGenerationError(AppException):
+    """Upstream LLM provider generation or connectivity failure."""
+
+    def __init__(self, message: str = "LLM generation failed", details: Optional[Any] = None):
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            error_code="LLM_GENERATION_ERROR",
+            details=details,
+        )
+
+
 def build_error_response(
     status_code: int,
     error_code: str,

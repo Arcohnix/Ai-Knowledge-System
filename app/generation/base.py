@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Dict, Iterator, Optional
+from typing import Any, Dict, Optional
 from pydantic import BaseModel, Field
 
 
@@ -21,7 +21,7 @@ class BaseLLMProvider(ABC):
     Abstract interface for LLM providers.
     Supports future interchangeable implementations:
     - Ollama / local models
-    - OpenAI / Azure OpenAI
+    - OpenAI / Azure OpenAI / OpenAI-compatible
     - Anthropic Claude
     - Google Gemini
     """
@@ -29,15 +29,24 @@ class BaseLLMProvider(ABC):
     @property
     @abstractmethod
     def provider_name(self) -> str:
-        """Returns the identifier of the provider (e.g. 'ollama', 'openai')."""
+        """Returns the identifier of the provider (e.g. 'ollama', 'openai', 'mock')."""
+        pass
+
+    @property
+    def model_name(self) -> str:
+        """Returns the specific model name or identifier."""
+        return getattr(self, "_model_name", "base-model")
+
+    @abstractmethod
+    def generate(
+        self, prompt: str, system_prompt: Optional[str] = None, **kwargs: Any
+    ) -> LLMResponse:
+        """Synchronously generate a response for the given prompt and optional system prompt."""
         pass
 
     @abstractmethod
-    def generate(self, prompt: str, **kwargs: Any) -> LLMResponse:
-        """Synchronously generate a response for the given prompt."""
-        pass
-
-    @abstractmethod
-    async def agenerate(self, prompt: str, **kwargs: Any) -> LLMResponse:
-        """Asynchronously generate a response for the given prompt."""
+    async def agenerate(
+        self, prompt: str, system_prompt: Optional[str] = None, **kwargs: Any
+    ) -> LLMResponse:
+        """Asynchronously generate a response for the given prompt and optional system prompt."""
         pass

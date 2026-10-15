@@ -13,9 +13,16 @@ from app.core.database import Base, get_db
 from app.main import create_application
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest.fixture(autouse=True)
+def default_test_settings(monkeypatch):
+    """Ensure safe testing defaults (mock LLM provider, local embedder)."""
+    monkeypatch.setattr(settings, "LLM_PROVIDER", "mock")
+    monkeypatch.setattr(settings, "EMBEDDING_PROVIDER", "local")
+
+
+@pytest_asyncio.fixture
 async def test_engine() -> AsyncGenerator[AsyncEngine, None]:
-    """Provides an isolated async SQLite engine for in-memory testing."""
+    """Provides an isolated async SQLite engine for each test."""
     test_db_url = "sqlite+aiosqlite:///:memory:"
     engine = create_async_engine(test_db_url, echo=False)
 

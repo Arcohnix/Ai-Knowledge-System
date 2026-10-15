@@ -10,27 +10,33 @@ An internal enterprise knowledge assistant designed to answer questions reliably
 
 ---
 
-## Project Status: Phase 1 (Foundation)
+## Project Status: Phase 4 (Retrieval-Augmented Generation)
 
 > [!NOTE]
-> This repository is currently on **Phase 3: Embeddings and Vector Database**.
+> This repository is currently on **Phase 4: Retrieval-Augmented Generation (RAG)**.
 >
-> Ingested document chunks are converted into dense vector embeddings and stored in PostgreSQL using `pgvector`. A reusable semantic retrieval service and search endpoint (`POST /api/v1/search`) support cosine similarity ranking, configurable thresholds, top_k limits, and metadata filtering. **No LLM generation implemented yet.**
+> The system implements an end-to-end question-answering pipeline: Query Processing -> Semantic Evidence Retrieval (pgvector) -> Context Construction with token budgeting -> LLM Generation (Ollama local / OpenAI-compatible / Mock) -> Attributed Source Response Formatting. Strict grounding instructions demand refusal with "information unavailable" when evidence is lacking.
 
 ---
 
 ## Key Features
 
-- **Dense Vector Embeddings**: Pluggable embedding providers supporting **Local models** (`FastEmbed` / BAAI/bge-small-en-v1.5 in ONNX runtime), **API providers** (OpenAI / Azure / Ollama), and **Deterministic Mock embedders** for offline testing.
-- **PostgreSQL + pgvector Integration**: Native vector storage and HNSW index (`vector_cosine_ops`) for sub-millisecond approximate nearest neighbor searches.
-- **Semantic Retrieval Service**: Reusable retrieval pipeline with configurable `top_k`, cosine `similarity_threshold`, and metadata filtering (by document ID, type, etc.).
-- **Multi-Format Ingestion**: Native parsing support for **PDF** (`pypdf`), **DOCX** (`python-docx`), **Plain Text** (`.txt`), and **Markdown** (`.md`).
-- **Duplicate Document Detection**: SHA-256 content hashing blocks duplicate uploads with a structured 409 Conflict response.
-- **Sensible Structural Chunking**: Recursive hierarchical chunking respecting markdown headings, paragraph breaks (`\n\n`), sentence boundaries, and words with configurable `chunk_size` and `chunk_overlap`.
-- **Text Normalization & Cleaning**: Strips null bytes, non-printable control codes, normalizes Unicode (NFKC), and standardizes line breaks.
-- **Relational Persistence**: PostgreSQL tables for `documents` and `document_chunks` with cascade deletion, indexed foreign keys, and JSON metadata.
-- **Production Observability**: Correlation IDs (`X-Request-ID`) and request timing (`X-Process-Time`) on every request.
-- **Comprehensive Pytest Suite**: 47 unit and integration tests passing both on host and inside Docker container.
+- **End-to-End RAG Pipeline**: Fully decoupled modular services:
+  1. `QueryProcessingService`: Sanitizes, normalizes, and extracts keywords.
+  2. `RetrievalService`: Coordinates vector embeddings and PostgreSQL `pgvector` HNSW search.
+  3. `ContextConstructionService`: Assembles numbered document citations with token/char budgeting.
+  4. `LLMGenerationService`: Interacts with provider-agnostic LLM interface with grounding prompts.
+  5. `ResponseFormattingService`: Structures attributed citations with relevance scores or clean refusal.
+- **Provider-Agnostic LLM Interface**:
+  - **Local Ollama Integration**: Native local inference via `http://localhost:11434` (e.g. `llama3:latest`).
+  - **OpenAI-Compatible Client**: Works with OpenAI, vLLM, Azure, or remote endpoints.
+  - **Deterministic Mock Provider**: Used for offline CI/CD and rapid reproducible testing.
+- **Strict Grounding & Citation Prompts**: System prompt instructs model to answer solely from context, forbid external facts, refuse on insufficient evidence, and reference source markers `[Document X]`.
+- **Benchmark Evaluation Dataset**: Curated benchmark (`tests/data/qa_eval_dataset.json`) with grounded enterprise questions and out-of-scope refusal verification.
+- **Dense Vector Embeddings**: Local FastEmbed (BAAI/bge-small-en-v1.5) in ONNX runtime, or API providers.
+- **PostgreSQL + pgvector**: HNSW vector index (`vector_cosine_ops`) for sub-millisecond retrieval.
+- **Multi-Format Ingestion**: PDF (`pypdf`), DOCX (`python-docx`), TXT, Markdown (`.md`).
+- **Comprehensive Pytest Suite**: 66 unit and integration tests passing both on host and inside Docker container.
 
 ---
 
@@ -232,8 +238,61 @@ Returns paginated list of ingested documents with optional `document_type` filte
 ### `GET /api/v1/documents/{document_id}`
 Returns document metadata alongside all extracted text chunks.
 
+### `POST /api/v1/search`
+Performs cosine similarity search using dense vector embeddings in PostgreSQL (pgvector).
+
+**Request:**
+```json
+{
+  "query": "data retention rules and policy",
+  "top_k": 3,
+  "similarity_threshold": 0.5
+}
+```
+
+### `POST /api/v1/ask`
+Executes an end-to-end Retrieval-Augmented Generation question-answering pipeline.
+
+**Request:**
+```json
+{
+  "question": "How long must customer personal identification data be retained?"
+}
+```
+
+**Sample 200 OK Response:**
+```json
+{
+  "question": "How long must customer personal identification data be retained?",
+  "answer": "Based on the provided context, customer personal identification data must be retained for at least 7 years pursuant to regulatory requirements [Document 1].",
+  "sources": [
+    {
+      "document": {
+        "document_id": "256b57cd-6b04-4ebc-97e1-90576ce6911b",
+        "title": "sample",
+        "filename": "sample.docx",
+        "document_type": "docx",
+        "source": "upload",
+        "version": "1.0"
+      },
+      "chunk": {
+        "chunk_id": "9377674e-b7fe-49f6-8fa5-127f6c136ada",
+        "chunk_index": 0,
+        "content": "Company Data Retention Policy\n\nCustomer personal identification data must be retained for at least 7 years pursuant to regulatory requirements.",
+        "metadata": {
+          "char_count": 213,
+          "token_estimate": 53
+        }
+      },
+      "relevance_score": 0.9256
+    }
+  ],
+  "model_name": "llama3:latest"
+}
+```
+
 ### `DELETE /api/v1/documents/{document_id}`
-Deletes document and cascades deletion to all associated chunks.
+Deletes document and cascades deletion to all associated chunks and embeddings.
 
 ### Error Responses
 All errors adhere to a structured, consistent format with request tracing:
@@ -241,12 +300,10 @@ All errors adhere to a structured, consistent format with request tracing:
 {
   "success": false,
   "error": {
-    "code": "CONFLICT",
-    "message": "Duplicate document detected: 'security.md' has already been ingested.",
+    "code": "LLM_GENERATION_ERROR",
+    "message": "Cannot connect to Ollama service at http://localhost:11434.",
     "details": {
-      "existing_document_id": "18c6e5d8-5fef-4219-b323-8a58bb336b0e",
-      "existing_filename": "security.md",
-      "checksum": "a7cbd8f27558917f31caf45230914024165930d256f13295de3440144dcc50de"
+      "error": "Connection refused"
     }
   },
   "request_id": "f74a3012-490f-4e04-968e-8e425c6e2ddc",
@@ -259,11 +316,11 @@ All errors adhere to a structured, consistent format with request tracing:
 ## Running Automated Tests
 
 ```bash
-# Run full test suite (41 tests)
-pytest -v
+# Run full test suite (66 tests)
+.venv/bin/pytest -v
 
 # Run with test coverage
-pytest --cov=app tests/
+.venv/bin/pytest --cov=app tests/
 
 # Run tests inside Docker container
 docker compose exec backend pytest -v
@@ -282,12 +339,19 @@ docker compose exec backend pytest -v
 | `DEFAULT_CHUNK_SIZE` | `500` | Target character size per text chunk |
 | `DEFAULT_CHUNK_OVERLAP`| `50` | Character overlap between consecutive chunks |
 | `MAX_FILE_SIZE_BYTES` | `26214400` | Maximum allowed file upload size (25 MB) |
+| `EMBEDDING_PROVIDER` | `local` | Embedding provider: `local` (FastEmbed), `api`/`openai`, `mock` |
+| `EMBEDDING_MODEL_NAME` | `BAAI/bge-small-en-v1.5` | Dense embedding model |
+| `LLM_PROVIDER` | `ollama` | Generation provider: `ollama` (local), `openai`/`api`, `mock` |
+| `LLM_MODEL` | `llama3:latest` | Model identifier for Ollama or OpenAI |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama service HTTP endpoint |
+| `RAG_DEFAULT_TOP_K` | `4` | Default number of retrieved chunks |
+| `RAG_DEFAULT_SIMILARITY_THRESHOLD` | `0.45` | Minimum cosine similarity threshold |
+| `RAG_MAX_CONTEXT_CHARS` | `8000` | Context token/char limit |
 | `POSTGRES_SERVER` | `localhost` (or `db`) | PostgreSQL hostname |
 | `POSTGRES_PORT` | `5433` (or `5432`) | PostgreSQL port |
 | `POSTGRES_USER` | `postgres` | Database username |
 | `POSTGRES_PASSWORD` | `postgres` | Database password |
 | `POSTGRES_DB` | `ai_knowledge_db` | Database name |
-| `DATABASE_URL` | Auto-constructed | Full async database connection URL |
 | `LOG_LEVEL` | `INFO` | Logger verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 | `LOG_FORMAT` | `text` | Log format: `text` (human-readable) or `json` (structured) |
 | `ALLOWED_ORIGINS` | `["*"]` | Allowed CORS origins (JSON array or comma-separated) |
@@ -298,9 +362,9 @@ docker compose exec backend pytest -v
 
 - [x] **Phase 1: Project Foundation** (Architecture, Docker, FastAPI, PostgreSQL, Health, Abstractions, Pytest)
 - [x] **Phase 2: Document Ingestion Pipeline** (PDF/DOCX/TXT/MD, Duplicate Detection, Chunking, DB Persistence)
-- [ ] **Phase 3: Chunking & Dense Embeddings**
-- [ ] **Phase 4: Vector Store & Retrieval Pipeline**
-- [ ] **Phase 5: Generation, Hallucination Prevention & "I don't know" Logic**
+- [x] **Phase 3: Embeddings & Vector Database** (Local FastEmbed, pgvector HNSW Indexing, Semantic Search)
+- [x] **Phase 4: Retrieval-Augmented Generation** (Query Processing, Ollama/OpenAI Abstractions, Grounded QA, Source Citations, Eval Dataset)
+- [ ] **Phase 5: Generation Quality, Hallucination Prevention & "I don't know" Logic**
 - [ ] **Phase 6: Faithfulness Verification & Quality Checks**
 - [ ] **Phase 7: Ragas Evaluation & Telemetry Dashboard**
 - [ ] **Phase 8: Frontend Knowledge Assistant UI**
