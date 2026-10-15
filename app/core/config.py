@@ -63,9 +63,16 @@ class Settings(BaseSettings):
     LLM_TEMPERATURE: float = 0.0
     LLM_MAX_TOKENS: int = 1024
     LLM_REQUEST_TIMEOUT: float = 60.0
+    LLM_MAX_RETRIES: int = 2
+    LLM_RETRY_DELAY: float = 0.5
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_API_BASE_URL: str = "https://api.openai.com/v1"
+
+    # Security & Guardrails
+    ENABLE_PROMPT_INJECTION_DETECTION: bool = True
+    MIN_QUESTION_LENGTH: int = 3
+    MAX_QUESTION_LENGTH: int = 1500
 
     # RAG Orchestration & Evidence Sufficiency
     RAG_FALLBACK_RESPONSE: str = (

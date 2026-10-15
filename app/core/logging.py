@@ -4,20 +4,25 @@ import sys
 from datetime import datetime, timezone
 from typing import Any, Dict
 from app.core.config import settings
+from app.core.security import mask_sensitive_data
 
 
 class JSONFormatter(logging.Formatter):
     """
     Formatter that outputs JSON strings including timestamp, log level,
     logger name, message, and any extra context (e.g. request_id).
+    Redacts sensitive credentials, tokens, and keys.
     """
 
     def format(self, record: logging.LogRecord) -> str:
+        raw_message = record.getMessage()
+        safe_message = mask_sensitive_data(raw_message)
+
         log_record: Dict[str, Any] = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "name": record.name,
-            "message": record.getMessage(),
+            "message": safe_message,
         }
 
         # Include request_id if attached
@@ -25,7 +30,7 @@ class JSONFormatter(logging.Formatter):
             log_record["request_id"] = record.request_id
 
         if record.exc_info:
-            log_record["exception"] = self.formatException(record.exc_info)
+            log_record["exception"] = mask_sensitive_data(self.formatException(record.exc_info))
 
         return json.dumps(log_record)
 
@@ -49,10 +54,10 @@ class TextFormatter(logging.Formatter):
         req_id = f" [{record.request_id}]" if hasattr(record, "request_id") else ""
         time_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         prefix = f"{time_str} {color}{record.levelname:<8}{self.RESET} [{record.name}]{req_id}"
-        message = record.getMessage()
+        message = mask_sensitive_data(record.getMessage())
         formatted = f"{prefix} {message}"
         if record.exc_info:
-            formatted += f"\n{self.formatException(record.exc_info)}"
+            formatted += f"\n{mask_sensitive_data(self.formatException(record.exc_info))}"
         return formatted
 
 

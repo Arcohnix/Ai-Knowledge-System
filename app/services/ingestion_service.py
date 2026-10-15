@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.exceptions import ConflictError, NotFoundError, ValidationException
 from app.core.logging import get_logger
+from app.core.security import sanitize_filename, validate_file_magic
 from app.ingestion.base import BaseEmbedder
 from app.ingestion.chunker import SensibleTextChunker
 from app.ingestion.cleaner import TextCleaner
@@ -45,23 +46,32 @@ class IngestionService:
         filename: str,
         content: bytes,
         content_type: Optional[str] = None,
-    ) -> str:
-        """Validates file presence, size limits, and supported extension/type."""
+    ) -> Tuple[str, str]:
+        """Validates file presence, safe filename, size limits, format, and magic signatures."""
         if not filename or not filename.strip():
             raise ValidationException("Filename cannot be empty")
 
+        clean_filename = sanitize_filename(filename)
+
         if not content or len(content) == 0:
-            raise ValidationException(f"Uploaded file '{filename}' is empty (0 bytes)")
+            raise ValidationException(f"Uploaded file '{clean_filename}' is empty (0 bytes)")
 
         if len(content) > settings.MAX_FILE_SIZE_BYTES:
             max_mb = settings.MAX_FILE_SIZE_BYTES / (1024 * 1024)
             raise ValidationException(
-                f"File '{filename}' exceeds maximum allowed size of {max_mb:.1f} MB"
+                f"File '{clean_filename}' exceeds maximum allowed size of {max_mb:.1f} MB"
             )
 
         # Ensure a parser exists for this format
-        document_type = ParserFactory.get_document_type(filename, content_type)
-        return document_type
+        document_type = ParserFactory.get_document_type(clean_filename, content_type)
+
+        # Verify binary magic signature
+        if not validate_file_magic(content, document_type):
+            raise ValidationException(
+                f"File '{clean_filename}' contains invalid file signature or corrupted binary structure for format '{document_type}'."
+            )
+
+        return clean_filename, document_type
 
     async def ingest_document(
         self,
@@ -79,18 +89,18 @@ class IngestionService:
         """
         Executes complete ingestion lifecycle with document lifecycle metadata.
         """
-        # 1. Validation
-        doc_type = await self.validate_file(filename, content, content_type)
+        # 1. Validation & File Sanitization
+        clean_filename, doc_type = await self.validate_file(filename, content, content_type)
 
         # 2. Checksum calculation & Duplicate detection
         checksum = self.calculate_checksum(content)
         existing_doc = await self.repository.get_by_checksum(checksum)
         if existing_doc:
             logger.warning(
-                f"Duplicate document rejected: '{filename}' matches existing document '{existing_doc.filename}' (ID: {existing_doc.id})"
+                f"Duplicate document rejected: '{clean_filename}' matches existing document '{existing_doc.filename}' (ID: {existing_doc.id})"
             )
             raise ConflictError(
-                f"Duplicate document detected: '{filename}' has already been ingested.",
+                f"Duplicate document detected: '{clean_filename}' has already been ingested.",
                 details={
                     "existing_document_id": str(existing_doc.id),
                     "existing_filename": existing_doc.filename,
@@ -99,11 +109,11 @@ class IngestionService:
             )
 
         # 3. Parsing & Text Extraction
-        parser = ParserFactory.get_parser(filename, content_type)
-        raw_documents = await parser.parse(content, filename)
+        parser = ParserFactory.get_parser(clean_filename, content_type)
+        raw_documents = await parser.parse(content, clean_filename)
         if not raw_documents or not raw_documents[0].content.strip():
             raise ValidationException(
-                f"Document '{filename}' could not be parsed or contains no extractable text."
+                f"Document '{clean_filename}' could not be parsed or contains no extractable text."
             )
 
         raw_doc = raw_documents[0]
@@ -112,7 +122,7 @@ class IngestionService:
         cleaned_text = TextCleaner.clean(raw_doc.content)
         if not cleaned_text:
             raise ValidationException(
-                f"Document '{filename}' contains no usable text after normalization."
+                f"Document '{clean_filename}' contains no usable text after normalization."
             )
 
         # 5. Chunking
@@ -135,7 +145,7 @@ class IngestionService:
         chunk_embeddings = await self.embedder.embed_documents(chunk_texts)
 
         # 7. Metadata Assembly
-        title = raw_doc.metadata.get("title") or os.path.splitext(filename)[0]
+        title = raw_doc.metadata.get("title") or os.path.splitext(clean_filename)[0]
         effective_str = effective_date.isoformat() if effective_date else None
         expiration_str = expiration_date.isoformat() if expiration_date else None
 
@@ -167,7 +177,7 @@ class IngestionService:
                     "start_char": split["start_char"],
                     "end_char": split["end_char"],
                     "document_title": title,
-                    "filename": filename,
+                    "filename": clean_filename,
                     "version": version,
                     "status": status,
                     "effective_date": effective_str,
@@ -178,7 +188,7 @@ class IngestionService:
         ]
 
         document_fields = {
-            "filename": filename,
+            "filename": clean_filename,
             "document_type": doc_type,
             "title": title,
             "source": source,

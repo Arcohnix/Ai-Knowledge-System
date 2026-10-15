@@ -52,6 +52,12 @@ services:
       - "${APP_HOST_PORT:-8001}:8000"
     volumes:
       - .:/app
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - ai_knowledge_network
 

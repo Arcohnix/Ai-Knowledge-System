@@ -1,0 +1,841 @@
+{
+  "run_id": "eval_20261015_182303_Config_A_TopK_3",
+  "timestamp": "2026-10-15T18:23:03.363297+00:00",
+  "config_name": "Config_A_TopK_3",
+  "model": "llama3:latest",
+  "embedding_model": "BAAI/bge-small-en-v1.5",
+  "retrieval_config": {
+    "top_k": 3,
+    "similarity_threshold": 0.35
+  },
+  "summary_metrics": {
+    "faithfulness": 1.0,
+    "answer_relevancy": 0.8456,
+    "context_precision": 0.6364,
+    "context_recall": 0.6364
+  },
+  "category_metrics": {
+    "multi_document": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.5964,
+      "context_precision": 0.5,
+      "context_recall": 0.5
+    },
+    "versioning": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8778,
+      "context_precision": 1.0,
+      "context_recall": 1.0
+    },
+    "contradiction": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9496,
+      "context_precision": 0.0,
+      "context_recall": 0.0
+    },
+    "unsupported": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_precision": 1.0,
+      "context_recall": 1.0
+    },
+    "straightforward": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8576,
+      "context_precision": 0.75,
+      "context_recall": 0.75
+    },
+    "ambiguous": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.851,
+      "context_precision": 0.0,
+      "context_recall": 0.0
+    }
+  },
+  "total_examples": 11,
+  "total_latency_seconds": 45.392,
+  "average_latency_seconds": 4.127,
+  "results": [
+    {
+      "example_id": "eval-001",
+      "question": "How many peer approvals are required for pull requests before merging?",
+      "category": "straightforward",
+      "expected_answer": "All pull requests must have at least two peer approvals before merging.",
+      "generated_answer": "Based solely on the provided context, the answer to the user's question is:\n\n\"All pull requests must have at least two peer approvals before merging.\" [Document 1]\n\nThis information is explicitly stated in the \"Code Review Guidelines\" section of the Engineering Operations Manual, which is Document 1.",
+      "retrieved_chunk_count": 3,
+      "retrieved_sources": [
+        {
+          "document": "sample.txt",
+          "version": "1.0",
+          "chunk_id": "b2e31f86-1698-47e8-9434-210eac8b7a90",
+          "score": 0.8362,
+          "excerpt": "Engineering Operations Manual Section 1: Code Review Guidelines. All pull requests must have at least two peer approvals before merging. Section 2: Deployment Windows. Production deployments are permitted Tuesday through Thursday.",
+          "chunk_index": null,
+          "document_id": "742f9103-d82c-43ae-99d7-cef99d245d7a"
+        },
+        {
+          "document": "sample.docx",
+          "version": "1.0",
+          "chunk_id": "9377674e-b7fe-49f6-8fa5-127f6c136ada",
+          "score": 0.6039,
+          "excerpt": "Company Data Retention Policy Customer personal identification data must be retained for at least 7 years pursuant to regulatory requirements. Financial transaction ledgers must be archived in immutable storage.",
+          "chunk_index": null,
+          "document_id": "256b57cd-6b04-4ebc-97e1-90576ce6911b"
+        },
+        {
+          "document": "sample.md",
+          "version": "1.0",
+          "chunk_id": "e8ca5b1f-8e44-4321-b26b-292aa59db475",
+          "score": 0.5909,
+          "excerpt": "# Enterprise Security Architecture ## 1. Zero Trust Principles All incoming network traffic must authenticate via mutual TLS. ## 2. Secrets Management No API keys or database credentials may be stored in source code.",
+          "chunk_index": null,
+          "document_id": "d2b6f754-b359-4562-8086-5f3a3e41b177"
+        }
+      ],
+      "latency_seconds": 3.019,
+      "metrics": {
+        "faithfulness": {
+          "metric_name": "faithfulness",
+          "score": 1.0,
+          "details": {
+            "claims_evaluated": 1,
+            "supported_claims_count": 1,
+            "unsupported_claims": [],
+            "supported": true
+          },
+          "explanation": "Generated answer contains 1 claim(s), of which 1 are supported by the retrieved context. Unsupported claims: []"
+        },
+        "answer_relevancy": {
+          "metric_name": "answer_relevancy",
+          "score": 0.925,
+          "details": {
+            "cosine_similarity": 0.9284,
+            "normalized_similarity": 1.0,
+            "token_overlap": 0.75
+          },
+          "explanation": "Computed answer relevancy: cosine semantic similarity=0.9284, key concept token overlap=0.75. Combined normalized relevancy=0.925."
+        },
+        "context_precision": {
+          "metric_name": "context_precision",
+          "score": 1.0,
+          "details": {
+            "k": 3,
+            "relevant_chunks_count": 1,
+            "relevance_vector": [
+              1,
+              0,
+              0
+            ],
+            "precision_at_k": [
+              1.0,
+              0.5,
+              0.3333333333333333
+            ]
+          },
+          "explanation": "Retrieved 1 relevant chunk(s) out of 3 total. Relevance ranks vector: [1, 0, 0]. Context Precision@K = 1.0."
+        },
+        "context_recall": {
+          "metric_name": "context_recall",
+          "score": 1.0,
+          "details": {
+            "total_expected_documents": 1,
+            "retrieved_expected_documents": [
+              "sample.txt"
+            ],
+            "missed_documents": []
+          },
+          "explanation": "Retrieved 1/1 expected documents. Matched: ['sample.txt']. Missed: []."
+        }
+      },
+      "reliability_status": "ACCEPT",
+      "contradiction_status": "AGREE"
+    },
+    {
+      "example_id": "eval-002",
+      "question": "What authentication protocol is required for incoming network traffic?",
+      "category": "straightforward",
+      "expected_answer": "All incoming network traffic must authenticate via mutual TLS.",
+      "generated_answer": "I will strictly adhere to the rules and provide an answer based only on the provided context.\n\nAccording to [Document 1], under the \"Zero Trust Principles\" section, it is stated that: \"All incoming network traffic must authenticate via mutual TLS.\"\n\nTherefore, the answer to the user's question is:\n\nThe authentication protocol required for incoming network traffic is mutual TLS.",
+      "retrieved_chunk_count": 3,
+      "retrieved_sources": [
+        {
+          "document": "sample.md",
+          "version": "1.0",
+          "chunk_id": "e8ca5b1f-8e44-4321-b26b-292aa59db475",
+          "score": 0.7544,
+          "excerpt": "# Enterprise Security Architecture ## 1. Zero Trust Principles All incoming network traffic must authenticate via mutual TLS. ## 2. Secrets Management No API keys or database credentials may be stored in source code.",
+          "chunk_index": null,
+          "document_id": "d2b6f754-b359-4562-8086-5f3a3e41b177"
+        },
+        {
+          "document": "sample.txt",
+          "version": "1.0",
+          "chunk_id": "b2e31f86-1698-47e8-9434-210eac8b7a90",
+          "score": 0.5494,
+          "excerpt": "Engineering Operations Manual Section 1: Code Review Guidelines. All pull requests must have at least two peer approvals before merging. Section 2: Deployment Windows. Production deployments are permitted Tuesday through Thursday.",
+          "chunk_index": null,
+          "document_id": "742f9103-d82c-43ae-99d7-cef99d245d7a"
+        },
+        {
+          "document": "sample.docx",
+          "version": "1.0",
+          "chunk_id": "9377674e-b7fe-49f6-8fa5-127f6c136ada",
+          "score": 0.5367,
+          "excerpt": "Company Data Retention Policy Customer personal identification data must be retained for at least 7 years pursuant to regulatory requirements. Financial transaction ledgers must be archived in immutable storage.",
+          "chunk_index": null,
+          "document_id": "256b57cd-6b04-4ebc-97e1-90576ce6911b"
+        }
+      ],
+      "latency_seconds": 6.247,
+      "metrics": {
+        "faithfulness": {
+          "metric_name": "faithfulness",
+          "score": 1.0,
+          "details": {
+            "claims_evaluated": 1,
+            "supported_claims_count": 1,
+            "unsupported_claims": [],
+            "supported": true
+          },
+          "explanation": "Generated answer contains 1 claim(s), of which 1 are supported by the retrieved context. Unsupported claims: []"
+        },
+        "answer_relevancy": {
+          "metric_name": "answer_relevancy",
+          "score": 0.9333,
+          "details": {
+            "cosine_similarity": 0.8762,
+            "normalized_similarity": 0.966,
+            "token_overlap": 0.8571
+          },
+          "explanation": "Computed answer relevancy: cosine semantic similarity=0.8762, key concept token overlap=0.8571. Combined normalized relevancy=0.9333."
+        },
+        "context_precision": {
+          "metric_name": "context_precision",
+          "score": 1.0,
+          "details": {
+            "k": 3,
+            "relevant_chunks_count": 1,
+            "relevance_vector": [
+              1,
+              0,
+              0
+            ],
+            "precision_at_k": [
+              1.0,
+              0.5,
+              0.3333333333333333
+            ]
+          },
+          "explanation": "Retrieved 1 relevant chunk(s) out of 3 total. Relevance ranks vector: [1, 0, 0]. Context Precision@K = 1.0."
+        },
+        "context_recall": {
+          "metric_name": "context_recall",
+          "score": 1.0,
+          "details": {
+            "total_expected_documents": 1,
+            "retrieved_expected_documents": [
+              "sample.md"
+            ],
+            "missed_documents": []
+          },
+          "explanation": "Retrieved 1/1 expected documents. Matched: ['sample.md']. Missed: []."
+        }
+      },
+      "reliability_status": "ACCEPT",
+      "contradiction_status": "AGREE"
+    },
+    {
+      "example_id": "eval-003",
+      "question": "How long must customer personal identification data be retained under company policy?",
+      "category": "straightforward",
+      "expected_answer": "Customer personal identification data must be retained for at least 7 years pursuant to regulatory requirements.",
+      "generated_answer": "Based solely on the provided context, the answer to the question is:\n\nCustomer personal identification data must be retained for at least 7 years, as stated in [Document 1] \"Company Data Retention Policy\".",
+      "retrieved_chunk_count": 2,
+      "retrieved_sources": [
+        {
+          "document": "sample.docx",
+          "version": "1.0",
+          "chunk_id": "9377674e-b7fe-49f6-8fa5-127f6c136ada",
+          "score": 0.9219,
+          "excerpt": "Company Data Retention Policy Customer personal identification data must be retained for at least 7 years pursuant to regulatory requirements. Financial transaction ledgers must be archived in immutable storage.",
+          "chunk_index": null,
+          "document_id": "256b57cd-6b04-4ebc-97e1-90576ce6911b"
+        },
+        {
+          "document": "sample.pdf",
+          "version": "1.0",
+          "chunk_id": "c1172c9c-9586-4274-b86b-fe20555deb6c",
+          "score": 0.5938,
+          "excerpt": "--- Page 1 --- Annual Corporate Compliance Report All employees must complete mandatory ethics certification annually.",
+          "chunk_index": null,
+          "document_id": "238468e0-3689-469c-9614-4c04586c7eb4"
+        }
+      ],
+      "latency_seconds": 2.253,
+      "metrics": {
+        "faithfulness": {
+          "metric_name": "faithfulness",
+          "score": 1.0,
+          "details": {
+            "claims_evaluated": 1,
+            "supported_claims_count": 1,
+            "unsupported_claims": [],
+            "supported": true
+          },
+          "explanation": "Generated answer contains 1 claim(s), of which 1 are supported by the retrieved context. Unsupported claims: []"
+        },
+        "answer_relevancy": {
+          "metric_name": "answer_relevancy",
+          "score": 0.94,
+          "details": {
+            "cosine_similarity": 0.9163,
+            "normalized_similarity": 1.0,
+            "token_overlap": 0.8
+          },
+          "explanation": "Computed answer relevancy: cosine semantic similarity=0.9163, key concept token overlap=0.8. Combined normalized relevancy=0.94."
+        },
+        "context_precision": {
+          "metric_name": "context_precision",
+          "score": 1.0,
+          "details": {
+            "k": 2,
+            "relevant_chunks_count": 1,
+            "relevance_vector": [
+              1,
+              0
+            ],
+            "precision_at_k": [
+              1.0,
+              0.5
+            ]
+          },
+          "explanation": "Retrieved 1 relevant chunk(s) out of 2 total. Relevance ranks vector: [1, 0]. Context Precision@K = 1.0."
+        },
+        "context_recall": {
+          "metric_name": "context_recall",
+          "score": 1.0,
+          "details": {
+            "total_expected_documents": 1,
+            "retrieved_expected_documents": [
+              "sample.docx"
+            ],
+            "missed_documents": []
+          },
+          "explanation": "Retrieved 1/1 expected documents. Matched: ['sample.docx']. Missed: []."
+        }
+      },
+      "reliability_status": "ACCEPT",
+      "contradiction_status": "CONFLICT"
+    },
+    {
+      "example_id": "eval-004",
+      "question": "How often are employees required to complete ethics certification?",
+      "category": "straightforward",
+      "expected_answer": "All employees must complete mandatory ethics certification annually.",
+      "generated_answer": "I couldn't find sufficient information in the available knowledge base to answer this question reliably. The context only provides information about the corporate vacation policy, but it does not mention anything about ethics certification or its frequency. Therefore, the information is unavailable.",
+      "retrieved_chunk_count": 0,
+      "retrieved_sources": [],
+      "latency_seconds": 2.364,
+      "metrics": {
+        "faithfulness": {
+          "metric_name": "faithfulness",
+          "score": 1.0,
+          "details": {
+            "claims_evaluated": 0,
+            "supported_claims_count": 0,
+            "unsupported_claims": [],
+            "supported": true
+          },
+          "explanation": "Generated answer contains 0 claim(s), of which 0 are supported by the retrieved context. Unsupported claims: []"
+        },
+        "answer_relevancy": {
+          "metric_name": "answer_relevancy",
+          "score": 0.6322,
+          "details": {
+            "cosine_similarity": 0.7322,
+            "normalized_similarity": 0.7602,
+            "token_overlap": 0.3333
+          },
+          "explanation": "Computed answer relevancy: cosine semantic similarity=0.7322, key concept token overlap=0.3333. Combined normalized relevancy=0.6322."
+        },
+        "context_precision": {
+          "metric_name": "context_precision",
+          "score": 0.0,
+          "details": {
+            "retrieved_chunks_count": 0
+          },
+          "explanation": "No chunks retrieved, yielding 0.0 context precision."
+        },
+        "context_recall": {
+          "metric_name": "context_recall",
+          "score": 0.0,
+          "details": {
+            "total_expected_documents": 1,
+            "retrieved_expected_documents": [],
+            "missed_documents": [
+              "sample.pdf"
+            ]
+          },
+          "explanation": "Retrieved 0/1 expected documents. Matched: []. Missed: ['sample.pdf']."
+        }
+      },
+      "reliability_status": "ACCEPT",
+      "contradiction_status": "CONFLICT"
+    },
+    {
+      "example_id": "eval-005",
+      "question": "On which days are production deployments permitted, and what is the rule regarding API keys or database credentials in source code?",
+      "category": "multi_document",
+      "expected_answer": "Production deployments are permitted Tuesday through Thursday according to the operations manual, and no API keys or database credentials may be stored in source code according to security architecture.",
+      "generated_answer": "I will strictly follow the rules and provide an accurate answer based only on the provided context.\n\nAccording to the context, production deployments are permitted on Tuesday through Thursday, as stated in [Document 1], Section 2: Deployment Windows.\n\nRegarding API keys or database credentials in source code, the context does not provide any information about this topic. Therefore, I don't have enough reliable information to answer this part of the question.\n\nAnswer: Production deployments are permitted on Tuesday through Thursday.",
+      "retrieved_chunk_count": 3,
+      "retrieved_sources": [
+        {
+          "document": "sample.txt",
+          "version": "1.0",
+          "chunk_id": "b2e31f86-1698-47e8-9434-210eac8b7a90",
+          "score": 0.737,
+          "excerpt": "Engineering Operations Manual Section 1: Code Review Guidelines. All pull requests must have at least two peer approvals before merging. Section 2: Deployment Windows. Production deployments are permitted Tuesday through Thursday.",
+          "chunk_index": null,
+          "document_id": "742f9103-d82c-43ae-99d7-cef99d245d7a"
+        },
+        {
+          "document": "sample.md",
+          "version": "1.0",
+          "chunk_id": "e8ca5b1f-8e44-4321-b26b-292aa59db475",
+          "score": 0.6888,
+          "excerpt": "# Enterprise Security Architecture ## 1. Zero Trust Principles All incoming network traffic must authenticate via mutual TLS. ## 2. Secrets Management No API keys or database credentials may be stored in source code.",
+          "chunk_index": null,
+          "document_id": "d2b6f754-b359-4562-8086-5f3a3e41b177"
+        },
+        {
+          "document": "sample.docx",
+          "version": "1.0",
+          "chunk_id": "9377674e-b7fe-49f6-8fa5-127f6c136ada",
+          "score": 0.6251,
+          "excerpt": "Company Data Retention Policy Customer personal identification data must be retained for at least 7 years pursuant to regulatory requirements. Financial transaction ledgers must be archived in immutable storage.",
+          "chunk_index": null,
+          "document_id": "256b57cd-6b04-4ebc-97e1-90576ce6911b"
+        }
+      ],
+      "latency_seconds": 8.732,
+      "metrics": {
+        "faithfulness": {
+          "metric_name": "faithfulness",
+          "score": 1.0,
+          "details": {
+            "claims_evaluated": 0,
+            "supported_claims_count": 0,
+            "unsupported_claims": [],
+            "supported": true
+          },
+          "explanation": "Generated answer contains 0 claim(s), of which 0 are supported by the retrieved context. Unsupported claims: []"
+        },
+        "answer_relevancy": {
+          "metric_name": "answer_relevancy",
+          "score": 0.9077,
+          "details": {
+            "cosine_similarity": 0.9084,
+            "normalized_similarity": 1.0,
+            "token_overlap": 0.6923
+          },
+          "explanation": "Computed answer relevancy: cosine semantic similarity=0.9084, key concept token overlap=0.6923. Combined normalized relevancy=0.9077."
+        },
+        "context_precision": {
+          "metric_name": "context_precision",
+          "score": 1.0,
+          "details": {
+            "k": 3,
+            "relevant_chunks_count": 2,
+            "relevance_vector": [
+              1,
+              1,
+              0
+            ],
+            "precision_at_k": [
+              1.0,
+              1.0,
+              0.6666666666666666
+            ]
+          },
+          "explanation": "Retrieved 2 relevant chunk(s) out of 3 total. Relevance ranks vector: [1, 1, 0]. Context Precision@K = 1.0."
+        },
+        "context_recall": {
+          "metric_name": "context_recall",
+          "score": 1.0,
+          "details": {
+            "total_expected_documents": 2,
+            "retrieved_expected_documents": [
+              "sample.txt",
+              "sample.md"
+            ],
+            "missed_documents": []
+          },
+          "explanation": "Retrieved 2/2 expected documents. Matched: ['sample.txt', 'sample.md']. Missed: []."
+        }
+      },
+      "reliability_status": "ACCEPT",
+      "contradiction_status": "AGREE"
+    },
+    {
+      "example_id": "eval-006",
+      "question": "What is mandatory regarding ethics training, and where must financial transaction ledgers be stored?",
+      "category": "multi_document",
+      "expected_answer": "All employees must complete mandatory ethics certification annually, and financial transaction ledgers must be archived in immutable storage.",
+      "generated_answer": "I don't have enough reliable information to answer this.",
+      "retrieved_chunk_count": 0,
+      "retrieved_sources": [],
+      "latency_seconds": 10.016,
+      "metrics": {
+        "faithfulness": {
+          "metric_name": "faithfulness",
+          "score": 1.0,
+          "details": {
+            "claims_evaluated": 0,
+            "supported_claims_count": 0,
+            "unsupported_claims": [],
+            "supported": true
+          },
+          "explanation": "Generated answer contains 0 claim(s), of which 0 are supported by the retrieved context. Unsupported claims: []"
+        },
+        "answer_relevancy": {
+          "metric_name": "answer_relevancy",
+          "score": 0.2851,
+          "details": {
+            "cosine_similarity": 0.4851,
+            "normalized_similarity": 0.4073,
+            "token_overlap": 0.0
+          },
+          "explanation": "Computed answer relevancy: cosine semantic similarity=0.4851, key concept token overlap=0.0. Combined normalized relevancy=0.2851."
+        },
+        "context_precision": {
+          "metric_name": "context_precision",
+          "score": 0.0,
+          "details": {
+            "retrieved_chunks_count": 0
+          },
+          "explanation": "No chunks retrieved, yielding 0.0 context precision."
+        },
+        "context_recall": {
+          "metric_name": "context_recall",
+          "score": 0.0,
+          "details": {
+            "total_expected_documents": 2,
+            "retrieved_expected_documents": [],
+            "missed_documents": [
+              "sample.pdf",
+              "sample.docx"
+            ]
+          },
+          "explanation": "Retrieved 0/2 expected documents. Matched: []. Missed: ['sample.pdf', 'sample.docx']."
+        }
+      },
+      "reliability_status": "REFUSE",
+      "contradiction_status": "AGREE"
+    },
+    {
+      "example_id": "eval-007",
+      "question": "What is the company policy regarding bringing dogs or personal pets to the office?",
+      "category": "unsupported",
+      "expected_answer": "I couldn't find sufficient information in the available knowledge base to answer this question reliably.",
+      "generated_answer": "I couldn't find sufficient information in the available knowledge base to answer this question reliably.",
+      "retrieved_chunk_count": 0,
+      "retrieved_sources": [],
+      "latency_seconds": 0.031,
+      "metrics": {
+        "faithfulness": {
+          "metric_name": "faithfulness",
+          "score": 1.0,
+          "details": {
+            "is_expected_refusal": true,
+            "refused_appropriately": true,
+            "unsupported_claims": []
+          },
+          "explanation": "Pipeline correctly recognized lack of sufficient authoritative evidence and issued a controlled refusal without fabricating claims."
+        },
+        "answer_relevancy": {
+          "metric_name": "answer_relevancy",
+          "score": 1.0,
+          "details": {
+            "is_refusal": true,
+            "appropriate_refusal": true
+          },
+          "explanation": "Answer correctly identified that the knowledge base lacks authoritative evidence and responded with a direct, unambiguous refusal."
+        },
+        "context_precision": {
+          "metric_name": "context_precision",
+          "score": 1.0,
+          "details": {
+            "is_unsupported_scenario": true,
+            "pipeline_refused": true,
+            "total_retrieved": 0
+          },
+          "explanation": "No relevant documents exist in knowledge base for this question. System correctly guarded against ranking false evidence."
+        },
+        "context_recall": {
+          "metric_name": "context_recall",
+          "score": 1.0,
+          "details": {
+            "expected_documents": [],
+            "missed_documents": []
+          },
+          "explanation": "No documents expected in ground truth for unsupported question. Context recall is 1.0."
+        }
+      },
+      "reliability_status": "REFUSE",
+      "contradiction_status": null
+    },
+    {
+      "example_id": "eval-008",
+      "question": "What is the guest Wi-Fi network password in the main headquarters building?",
+      "category": "unsupported",
+      "expected_answer": "I couldn't find sufficient information in the available knowledge base to answer this question reliably.",
+      "generated_answer": "I couldn't find sufficient information in the available knowledge base to answer this question reliably.",
+      "retrieved_chunk_count": 0,
+      "retrieved_sources": [],
+      "latency_seconds": 0.022,
+      "metrics": {
+        "faithfulness": {
+          "metric_name": "faithfulness",
+          "score": 1.0,
+          "details": {
+            "is_expected_refusal": true,
+            "refused_appropriately": true,
+            "unsupported_claims": []
+          },
+          "explanation": "Pipeline correctly recognized lack of sufficient authoritative evidence and issued a controlled refusal without fabricating claims."
+        },
+        "answer_relevancy": {
+          "metric_name": "answer_relevancy",
+          "score": 1.0,
+          "details": {
+            "is_refusal": true,
+            "appropriate_refusal": true
+          },
+          "explanation": "Answer correctly identified that the knowledge base lacks authoritative evidence and responded with a direct, unambiguous refusal."
+        },
+        "context_precision": {
+          "metric_name": "context_precision",
+          "score": 1.0,
+          "details": {
+            "is_unsupported_scenario": true,
+            "pipeline_refused": true,
+            "total_retrieved": 0
+          },
+          "explanation": "No relevant documents exist in knowledge base for this question. System correctly guarded against ranking false evidence."
+        },
+        "context_recall": {
+          "metric_name": "context_recall",
+          "score": 1.0,
+          "details": {
+            "expected_documents": [],
+            "missed_documents": []
+          },
+          "explanation": "No documents expected in ground truth for unsupported question. Context recall is 1.0."
+        }
+      },
+      "reliability_status": "REFUSE",
+      "contradiction_status": null
+    },
+    {
+      "example_id": "eval-009",
+      "question": "Can I deploy code to production right now?",
+      "category": "ambiguous",
+      "expected_answer": "Production deployments are only permitted Tuesday through Thursday, and pull requests must have at least two peer approvals prior to merging.",
+      "generated_answer": "Based solely on the provided context, I can answer the question as follows:\n\nThe context does not provide information about the current time or day of the week. Therefore, I cannot determine whether it is currently permitted to deploy code to production.\n\nAccording to [Document 1], production deployments are permitted Tuesday through Thursday, but the specific day of the week is not specified.\n\nSince the context does not provide the current day of the week, I cannot determine whether it is currently permitted to deploy code to production. The information is unavailable to answer this question reliably.\n\nI couldn't find sufficient information in the available knowledge base to answer this question reliably.",
+      "retrieved_chunk_count": 0,
+      "retrieved_sources": [],
+      "latency_seconds": 5.792,
+      "metrics": {
+        "faithfulness": {
+          "metric_name": "faithfulness",
+          "score": 1.0,
+          "details": {
+            "claims_evaluated": 0,
+            "supported_claims_count": 0,
+            "unsupported_claims": [],
+            "supported": true
+          },
+          "explanation": "Generated answer contains 0 claim(s), of which 0 are supported by the retrieved context. Unsupported claims: []"
+        },
+        "answer_relevancy": {
+          "metric_name": "answer_relevancy",
+          "score": 0.851,
+          "details": {
+            "cosine_similarity": 0.826,
+            "normalized_similarity": 0.8943,
+            "token_overlap": 0.75
+          },
+          "explanation": "Computed answer relevancy: cosine semantic similarity=0.826, key concept token overlap=0.75. Combined normalized relevancy=0.851."
+        },
+        "context_precision": {
+          "metric_name": "context_precision",
+          "score": 0.0,
+          "details": {
+            "retrieved_chunks_count": 0
+          },
+          "explanation": "No chunks retrieved, yielding 0.0 context precision."
+        },
+        "context_recall": {
+          "metric_name": "context_recall",
+          "score": 0.0,
+          "details": {
+            "total_expected_documents": 1,
+            "retrieved_expected_documents": [],
+            "missed_documents": [
+              "sample.txt"
+            ]
+          },
+          "explanation": "Retrieved 0/1 expected documents. Matched: []. Missed: ['sample.txt']."
+        }
+      },
+      "reliability_status": "ACCEPT",
+      "contradiction_status": "AGREE"
+    },
+    {
+      "example_id": "eval-010",
+      "question": "How many annual vacation days do employees receive under the current active corporate vacation policy?",
+      "category": "versioning",
+      "expected_answer": "Under the active Corporate Vacation Policy (version 2026.1), employees receive 25 annual vacation days upon hiring, superseding the previous 2024 policy which granted 20 days.",
+      "generated_answer": "Based solely on the provided context, the answer to the question is:\n\nEmployees receive 25 annual vacation days upon hiring.\n\nThis information is explicitly stated in [Document 1], which is the Corporate Vacation Policy.",
+      "retrieved_chunk_count": 1,
+      "retrieved_sources": [
+        {
+          "document": "policy_2026.txt",
+          "version": "2026.1",
+          "chunk_id": "eb1e29ff-dab6-4bb8-bda1-a1479a5bc502",
+          "score": 0.8882,
+          "excerpt": "Corporate Vacation Policy. Employees receive 25 annual vacation days upon hiring.",
+          "chunk_index": null,
+          "document_id": "42030ea4-1a24-4668-ba16-0e6c8ad940a7"
+        }
+      ],
+      "latency_seconds": 1.912,
+      "metrics": {
+        "faithfulness": {
+          "metric_name": "faithfulness",
+          "score": 1.0,
+          "details": {
+            "claims_evaluated": 2,
+            "supported_claims_count": 2,
+            "unsupported_claims": [],
+            "supported": true
+          },
+          "explanation": "Generated answer contains 2 claim(s), of which 2 are supported by the retrieved context. Unsupported claims: []"
+        },
+        "answer_relevancy": {
+          "metric_name": "answer_relevancy",
+          "score": 0.8778,
+          "details": {
+            "cosine_similarity": 0.8869,
+            "normalized_similarity": 0.9813,
+            "token_overlap": 0.6364
+          },
+          "explanation": "Computed answer relevancy: cosine semantic similarity=0.8869, key concept token overlap=0.6364. Combined normalized relevancy=0.8778."
+        },
+        "context_precision": {
+          "metric_name": "context_precision",
+          "score": 1.0,
+          "details": {
+            "k": 1,
+            "relevant_chunks_count": 1,
+            "relevance_vector": [
+              1
+            ],
+            "precision_at_k": [
+              1.0
+            ]
+          },
+          "explanation": "Retrieved 1 relevant chunk(s) out of 1 total. Relevance ranks vector: [1]. Context Precision@K = 1.0."
+        },
+        "context_recall": {
+          "metric_name": "context_recall",
+          "score": 1.0,
+          "details": {
+            "total_expected_documents": 1,
+            "retrieved_expected_documents": [
+              "policy_2026.txt"
+            ],
+            "missed_documents": []
+          },
+          "explanation": "Retrieved 1/1 expected documents. Matched: ['policy_2026.txt']. Missed: []."
+        }
+      },
+      "reliability_status": "ACCEPT",
+      "contradiction_status": "CONFLICT"
+    },
+    {
+      "example_id": "eval-011",
+      "question": "What is the standard annual vacation entitlement across company departments?",
+      "category": "contradiction",
+      "expected_answer": "I found conflicting information in the knowledge base and cannot determine which policy is currently authoritative.",
+      "generated_answer": "I apologize for the previous mistake. Based on the provided context, I can answer the question as follows:\n\nThe standard annual vacation entitlement across company departments is [Document 1] which states: \"Employees receive 25 annual vacation days upon hiring.\"\n\nI do not have enough reliable information to answer this.",
+      "retrieved_chunk_count": 1,
+      "retrieved_sources": [
+        {
+          "document": "policy_2026.txt",
+          "version": "2026.1",
+          "chunk_id": "eb1e29ff-dab6-4bb8-bda1-a1479a5bc502",
+          "score": 0.8182,
+          "excerpt": "Corporate Vacation Policy. Employees receive 25 annual vacation days upon hiring.",
+          "chunk_index": null,
+          "document_id": "42030ea4-1a24-4668-ba16-0e6c8ad940a7"
+        }
+      ],
+      "latency_seconds": 4.591,
+      "metrics": {
+        "faithfulness": {
+          "metric_name": "faithfulness",
+          "score": 1.0,
+          "details": {
+            "claims_evaluated": 0,
+            "supported_claims_count": 0,
+            "unsupported_claims": [],
+            "supported": true
+          },
+          "explanation": "Generated answer contains 0 claim(s), of which 0 are supported by the retrieved context. Unsupported claims: []"
+        },
+        "answer_relevancy": {
+          "metric_name": "answer_relevancy",
+          "score": 0.9496,
+          "details": {
+            "cosine_similarity": 0.8871,
+            "normalized_similarity": 0.9816,
+            "token_overlap": 0.875
+          },
+          "explanation": "Computed answer relevancy: cosine semantic similarity=0.8871, key concept token overlap=0.875. Combined normalized relevancy=0.9496."
+        },
+        "context_precision": {
+          "metric_name": "context_precision",
+          "score": 0.0,
+          "details": {
+            "k": 1,
+            "relevant_chunks_count": 0,
+            "relevance_vector": [
+              0
+            ],
+            "precision_at_k": [
+              0.0
+            ]
+          },
+          "explanation": "None of the 1 retrieved chunks matched expected ground-truth documents ['vacation_hr.txt', 'vacation_eng.txt']."
+        },
+        "context_recall": {
+          "metric_name": "context_recall",
+          "score": 0.0,
+          "details": {
+            "total_expected_documents": 2,
+            "retrieved_expected_documents": [],
+            "missed_documents": [
+              "vacation_hr.txt",
+              "vacation_eng.txt"
+            ]
+          },
+          "explanation": "Retrieved 0/2 expected documents. Matched: []. Missed: ['vacation_hr.txt', 'vacation_eng.txt']."
+        }
+      },
+      "reliability_status": "ACCEPT",
+      "contradiction_status": "CONFLICT"
+    }
+  ]
+}

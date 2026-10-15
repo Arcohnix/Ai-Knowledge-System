@@ -1,4 +1,5 @@
 import asyncio
+import time
 from typing import Any, Dict, Optional
 import httpx
 from app.core.config import settings
@@ -62,29 +63,32 @@ class OllamaLLMProvider(BaseLLMProvider):
     ) -> LLMResponse:
         url = f"{self._base_url}/api/chat"
         payload = self._build_payload(prompt, system_prompt)
+        max_retries = kwargs.get("max_retries", settings.LLM_MAX_RETRIES)
+        retry_delay = kwargs.get("retry_delay", settings.LLM_RETRY_DELAY)
 
-        try:
-            with httpx.Client(timeout=self._timeout) as client:
-                response = client.post(url, json=payload)
-                response.raise_for_status()
-                data = response.json()
-        except httpx.ConnectError as exc:
-            logger.error(f"Cannot connect to Ollama at {self._base_url}: {exc}")
-            raise LLMGenerationError(
-                f"Cannot connect to Ollama service at {self._base_url}. Please ensure Ollama is running.",
-                details={"error": str(exc), "base_url": self._base_url},
-            ) from exc
-        except httpx.TimeoutException as exc:
-            logger.error(f"Ollama request timed out after {self._timeout}s: {exc}")
-            raise LLMGenerationError(
-                f"Ollama request timed out after {self._timeout}s.",
-                details={"timeout": self._timeout},
-            ) from exc
-        except Exception as exc:
-            logger.error(f"Ollama generation failed: {exc}")
-            raise LLMGenerationError(
-                f"Ollama generation failed: {str(exc)}", details={"error": str(exc)}
-            ) from exc
+        for attempt in range(max_retries + 1):
+            try:
+                with httpx.Client(timeout=self._timeout) as client:
+                    response = client.post(url, json=payload)
+                    response.raise_for_status()
+                    data = response.json()
+                    break
+            except (httpx.ConnectError, httpx.TimeoutException) as exc:
+                if attempt < max_retries:
+                    wait_time = retry_delay * (2 ** attempt)
+                    logger.warning(f"Transient Ollama error ({exc}). Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                else:
+                    logger.error(f"Cannot connect to Ollama after {max_retries} retries: {exc}")
+                    raise LLMGenerationError(
+                        f"Cannot connect to Ollama service at {self._base_url} after {max_retries} retries: {exc}",
+                        details={"error": str(exc), "base_url": self._base_url},
+                    ) from exc
+            except Exception as exc:
+                logger.error(f"Ollama generation failed: {exc}")
+                raise LLMGenerationError(
+                    f"Ollama generation failed: {str(exc)}", details={"error": str(exc)}
+                ) from exc
 
         content = data.get("message", {}).get("content", "")
         token_usage = {
@@ -104,29 +108,32 @@ class OllamaLLMProvider(BaseLLMProvider):
     ) -> LLMResponse:
         url = f"{self._base_url}/api/chat"
         payload = self._build_payload(prompt, system_prompt)
+        max_retries = kwargs.get("max_retries", settings.LLM_MAX_RETRIES)
+        retry_delay = kwargs.get("retry_delay", settings.LLM_RETRY_DELAY)
 
-        try:
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
-                response = await client.post(url, json=payload)
-                response.raise_for_status()
-                data = response.json()
-        except httpx.ConnectError as exc:
-            logger.error(f"Cannot connect to Ollama at {self._base_url}: {exc}")
-            raise LLMGenerationError(
-                f"Cannot connect to Ollama service at {self._base_url}. Please ensure Ollama is running.",
-                details={"error": str(exc), "base_url": self._base_url},
-            ) from exc
-        except httpx.TimeoutException as exc:
-            logger.error(f"Ollama request timed out after {self._timeout}s: {exc}")
-            raise LLMGenerationError(
-                f"Ollama request timed out after {self._timeout}s.",
-                details={"timeout": self._timeout},
-            ) from exc
-        except Exception as exc:
-            logger.error(f"Ollama generation failed: {exc}")
-            raise LLMGenerationError(
-                f"Ollama generation failed: {str(exc)}", details={"error": str(exc)}
-            ) from exc
+        for attempt in range(max_retries + 1):
+            try:
+                async with httpx.AsyncClient(timeout=self._timeout) as client:
+                    response = await client.post(url, json=payload)
+                    response.raise_for_status()
+                    data = response.json()
+                    break
+            except (httpx.ConnectError, httpx.TimeoutException) as exc:
+                if attempt < max_retries:
+                    wait_time = retry_delay * (2 ** attempt)
+                    logger.warning(f"Transient Ollama error ({exc}). Retrying in {wait_time}s...")
+                    await asyncio.sleep(wait_time)
+                else:
+                    logger.error(f"Cannot connect to Ollama after {max_retries} retries: {exc}")
+                    raise LLMGenerationError(
+                        f"Cannot connect to Ollama service at {self._base_url} after {max_retries} retries: {exc}",
+                        details={"error": str(exc), "base_url": self._base_url},
+                    ) from exc
+            except Exception as exc:
+                logger.error(f"Ollama generation failed: {exc}")
+                raise LLMGenerationError(
+                    f"Ollama generation failed: {str(exc)}", details={"error": str(exc)}
+                ) from exc
 
         content = data.get("message", {}).get("content", "")
         token_usage = {

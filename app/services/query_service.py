@@ -1,9 +1,11 @@
 import re
 import unicodedata
-from typing import List, Set
+from typing import List, Optional, Set
 from pydantic import BaseModel, Field
+from app.core.config import settings
 from app.core.exceptions import ValidationException
 from app.core.logging import get_logger
+from app.core.security import detect_prompt_injection
 
 logger = get_logger(__name__)
 
@@ -33,13 +35,14 @@ class QueryProcessingService:
     Ensures input safety and removes extraneous formatting noise.
     """
 
-    def __init__(self, min_length: int = 2, max_length: int = 2000):
-        self.min_length = min_length
-        self.max_length = max_length
+    def __init__(self, min_length: Optional[int] = None, max_length: Optional[int] = None):
+        self.min_length = min_length if min_length is not None else settings.MIN_QUESTION_LENGTH
+        self.max_length = max_length if max_length is not None else settings.MAX_QUESTION_LENGTH
 
     def process(self, query: str) -> ProcessedQuery:
         """
         Validates, sanitizes, and normalizes an input question.
+        Checks for obvious prompt injection attempts and length bounds.
         """
         if not query or not isinstance(query, str):
             raise ValidationException("Question must be a non-empty string.")
@@ -64,6 +67,14 @@ class QueryProcessingService:
             raise ValidationException(
                 f"Question exceeds maximum permitted length of {self.max_length} characters."
             )
+
+        # Scan for obvious prompt injection / system prompt override attempts
+        if settings.ENABLE_PROMPT_INJECTION_DETECTION:
+            is_injection, pattern_desc = detect_prompt_injection(cleaned)
+            if is_injection:
+                raise ValidationException(
+                    f"Security rejection: Prompt injection or system instruction override attempt detected ({pattern_desc})."
+                )
 
         # Extract meaningful keywords for telemetry and debugging
         tokens = re.findall(r"\b[a-zA-Z0-9_\-]{3,}\b", cleaned.lower())
