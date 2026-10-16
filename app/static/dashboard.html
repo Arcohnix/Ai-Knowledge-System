@@ -6,443 +6,974 @@
   <title>AI Knowledge System | Control Plane & Observability</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-base: #090d16;
-      --bg-surface: #0f172a;
-      --bg-surface-elevated: #1e293b;
-      --bg-surface-hover: #273549;
-      --border-subtle: #1e293b;
-      --border-strong: #334155;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --accent-blue: #3b82f6;
-      --accent-emerald: #10b981;
-      --accent-amber: #f59e0b;
-      --accent-rose: #f43f5e;
-      --accent-purple: #8b5cf6;
-      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      /* Base neutral palette (~85%) */
+      --bg-page: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-surface-subtle: #fcfcfd;
+      --bg-hover: #f1f5f9;
+      --bg-active: #eef2ff;
+
+      --border-subtle: #f1f5f9;
+      --border-default: #e2e8f0;
+      --border-strong: #cbd5e1;
+
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --text-tertiary: #94a3b8;
+
+      /* Restrained Accent (~5%) */
+      --accent-indigo: #4f46e5;
+      --accent-indigo-hover: #4338ca;
+      --accent-indigo-subtle: #eef2ff;
+      --accent-indigo-border: #c7d2fe;
+
+      /* Status Colors (~10%) - Muted & Professional */
+      --status-emerald-bg: #ecfdf5;
+      --status-emerald-text: #047857;
+      --status-emerald-border: #a7f3d0;
+
+      --status-amber-bg: #fffbeb;
+      --status-amber-text: #b45309;
+      --status-amber-border: #fde68a;
+
+      --status-rose-bg: #fef2f2;
+      --status-rose-text: #b91c1c;
+      --status-rose-border: #fecaca;
+
+      --status-blue-bg: #eff6ff;
+      --status-blue-text: #1d4ed8;
+      --status-blue-border: #bfdbfe;
+
+      --status-purple-bg: #f5f3ff;
+      --status-purple-text: #6d28d9;
+      --status-purple-border: #ddd6fe;
+
+      /* Typography */
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
+
+      /* Elevation */
+      --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+      --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.06), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      background-color: var(--bg-base);
-      color: var(--text-main);
+      background-color: var(--bg-page);
+      color: var(--text-primary);
       font-family: var(--font-sans);
+      font-size: 14px;
       line-height: 1.5;
       display: flex;
       height: 100vh;
       overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Sidebar Navigation */
+    /* Minimal Left Sidebar */
     aside {
-      width: 270px;
+      width: 250px;
       background: var(--bg-surface);
-      border-right: 1px solid var(--border-subtle);
+      border-right: 1px solid var(--border-default);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
+      user-select: none;
     }
-    .brand {
-      padding: 24px 20px;
-      border-bottom: 1px solid var(--border-subtle);
+
+    .brand-area {
+      padding: 20px 18px 16px 18px;
+      border-bottom: 1px solid var(--border-default);
     }
     .brand-title {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
-      letter-spacing: 0.5px;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 9px;
+    }
+    .brand-logo-mark {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: #fff;
     }
-    .brand-badge {
-      font-size: 10px;
-      font-weight: 600;
-      background: rgba(59, 130, 246, 0.15);
-      color: var(--accent-blue);
-      padding: 2px 7px;
-      border-radius: 4px;
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      font-family: var(--font-mono);
-    }
-    .brand-sub {
-      font-size: 12px;
-      color: var(--text-dim);
-      margin-top: 4px;
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      font-weight: 400;
     }
 
     nav {
       flex: 1;
-      padding: 16px 12px;
+      padding: 14px 10px;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      overflow-y: auto;
+      gap: 18px;
     }
+
+    .nav-group-title {
+      font-size: 10.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+      padding: 0 10px 4px 10px;
+    }
+
+    .nav-group-items {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
     .nav-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 10px 14px;
-      border-radius: 6px;
-      font-size: 13.5px;
+      gap: 10px;
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
       font-weight: 500;
-      color: var(--text-muted);
+      color: var(--text-secondary);
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: background-color 0.12s ease, color 0.12s ease;
+      position: relative;
     }
     .nav-item:hover {
-      background: var(--bg-surface-elevated);
-      color: var(--text-main);
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
     }
     .nav-item.active {
-      background: rgba(59, 130, 246, 0.15);
-      color: #60a5fa;
+      background-color: var(--accent-indigo-subtle);
+      color: var(--accent-indigo);
       font-weight: 600;
-      border-left: 3px solid var(--accent-blue);
     }
-    .nav-icon { width: 18px; height: 18px; stroke-width: 2; }
+    .nav-item.active svg {
+      stroke: var(--accent-indigo);
+    }
+    .nav-icon {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-muted);
+      stroke-width: 2;
+      flex-shrink: 0;
+      transition: stroke 0.12s ease;
+    }
+    .nav-badge-pill {
+      margin-left: auto;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--accent-indigo-subtle);
+      color: var(--accent-indigo);
+      border: 1px solid var(--accent-indigo-border);
+    }
 
-    .system-status-box {
-      padding: 16px 20px;
-      border-top: 1px solid var(--border-subtle);
-      background: rgba(15, 23, 42, 0.4);
-      font-size: 12px;
+    /* System Status Footer */
+    .sidebar-footer {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border-default);
+      background: var(--bg-surface-subtle);
+      font-size: 11.5px;
+      color: var(--text-muted);
     }
-    .status-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
-    .status-dot {
-      display: inline-block;
-      width: 7px;
-      height: 7px;
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    .status-row:last-child { margin-bottom: 0; }
+    .status-indicator-dot {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: var(--accent-emerald);
-      box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
-      margin-right: 6px;
+      background: #10b981;
+      display: inline-block;
+      margin-right: 5px;
     }
 
-    /* Main Content Area */
+    /* Main View Area */
     main {
       flex: 1;
       display: flex;
       flex-direction: column;
       overflow-y: auto;
-      background: radial-gradient(circle at top right, rgba(30, 41, 59, 0.35), transparent 70%);
+      background: var(--bg-page);
     }
 
     header {
-      padding: 20px 32px;
-      border-bottom: 1px solid var(--border-subtle);
+      padding: 16px 28px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-default);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(8px);
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 20;
     }
-    .header-title h1 { font-size: 20px; font-weight: 700; color: #fff; }
-    .header-title p { font-size: 13px; color: var(--text-dim); }
-    .header-actions { display: flex; gap: 12px; align-items: center; }
-
-    .btn {
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-size: 13px;
+    .header-breadcrumb {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .header-breadcrumb h1 {
+      font-size: 17px;
       font-weight: 600;
-      cursor: pointer;
+      color: var(--text-primary);
+      letter-spacing: -0.015em;
+    }
+    .header-breadcrumb p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    /* Buttons */
+    .btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
-      transition: all 0.15s ease;
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
       border: 1px solid transparent;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      line-height: 1;
     }
     .btn-secondary {
-      background: var(--bg-surface-elevated);
-      color: var(--text-main);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border-color: var(--border-default);
+      box-shadow: var(--shadow-xs);
+    }
+    .btn-secondary:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
       border-color: var(--border-strong);
     }
-    .btn-secondary:hover { background: var(--bg-surface-hover); }
     .btn-primary {
-      background: var(--accent-blue);
-      color: #fff;
+      background: var(--accent-indigo);
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(79, 70, 229, 0.2);
     }
-    .btn-primary:hover { background: #2563eb; }
+    .btn-primary:hover {
+      background: var(--accent-indigo-hover);
+    }
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 11.5px;
+    }
 
+    /* Content Layout */
     .content-container {
-      padding: 32px;
-      max-width: 1400px;
+      padding: 28px;
+      max-width: 1200px;
       width: 100%;
       margin: 0 auto;
     }
 
-    /* Cards & Grids */
-    .grid-kpi {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-    .kpi-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 18px 20px;
-      transition: transform 0.1s ease, border-color 0.1s ease;
-    }
-    .kpi-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
-    .kpi-label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-dim);
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .kpi-value {
-      font-size: 26px;
-      font-weight: 700;
-      color: #fff;
-      font-family: var(--font-mono);
-    }
-    .kpi-sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    /* Panels & Tables */
+    /* Cards & Panels */
     .panel {
       background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-xs);
       margin-bottom: 24px;
       overflow: hidden;
     }
     .panel-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border-subtle);
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-default);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(30, 41, 59, 0.2);
+      background: var(--bg-surface-subtle);
     }
-    .panel-title { font-size: 15px; font-weight: 600; color: #fff; }
+    .panel-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-body {
+      padding: 20px;
+    }
 
+    /* Metric KPI Cards (Understated & Crisp) */
+    .grid-kpi {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-xs);
+      transition: border-color 0.15s ease;
+    }
+    .kpi-card:hover {
+      border-color: var(--border-strong);
+    }
+    .kpi-label {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      font-family: var(--font-sans);
+    }
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Tables */
     table {
       width: 100%;
       border-collapse: collapse;
-      text-align: left;
       font-size: 13px;
+      text-align: left;
     }
     th {
-      background: rgba(15, 23, 42, 0.7);
-      color: var(--text-dim);
+      background: var(--bg-surface-subtle);
+      color: var(--text-muted);
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
       font-size: 11px;
-      padding: 12px 18px;
-      border-bottom: 1px solid var(--border-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-default);
     }
     td {
-      padding: 14px 18px;
+      padding: 12px 14px;
       border-bottom: 1px solid var(--border-subtle);
-      color: var(--text-muted);
+      color: var(--text-secondary);
+      vertical-align: middle;
     }
-    tr:hover td { background: rgba(30, 41, 59, 0.4); }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    tr:hover td {
+      background: var(--bg-hover);
+    }
 
-    /* Badges */
+    /* Badges & Status Indicators */
     .badge {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 4px;
       font-size: 11px;
-      font-weight: 600;
-      font-family: var(--font-mono);
-      text-transform: uppercase;
+      font-weight: 500;
+      line-height: 1.2;
     }
-    .badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-    .badge-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-    .badge-danger { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
-    .badge-info { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-verified, .badge-success, .badge-active {
+      background: var(--status-emerald-bg);
+      color: var(--status-emerald-text);
+      border: 1px solid var(--status-emerald-border);
+    }
+    .badge-warning, .badge-superseded, .badge-review {
+      background: var(--status-amber-bg);
+      color: var(--status-amber-text);
+      border: 1px solid var(--status-amber-border);
+    }
+    .badge-refused, .badge-expired, .badge-danger, .badge-conflict {
+      background: var(--status-rose-bg);
+      color: var(--status-rose-text);
+      border: 1px solid var(--status-rose-border);
+    }
+    .badge-info {
+      background: var(--status-blue-bg);
+      color: var(--status-blue-text);
+      border: 1px solid var(--status-blue-border);
+    }
+    .badge-neutral {
+      background: var(--bg-hover);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-default);
+    }
 
-    /* Live Query Tester Box */
-    .query-tester-card {
-      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
-      border: 1px solid var(--border-strong);
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 24px;
+    /* Ask Knowledge Interface (Primary Experience) */
+    .ask-hero {
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto 28px auto;
+      padding-top: 10px;
     }
-    .query-input-row {
-      display: flex;
-      gap: 12px;
-      margin-top: 12px;
+    .ask-hero h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.025em;
+      margin-bottom: 6px;
     }
-    .query-input {
-      flex: 1;
-      background: var(--bg-base);
-      border: 1px solid var(--border-strong);
-      border-radius: 6px;
-      padding: 10px 16px;
-      color: #fff;
-      font-size: 14px;
+    .ask-hero p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+    }
+
+    .ask-input-box {
+      max-width: 780px;
+      margin: 0 auto 24px auto;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .ask-input-box:focus-within {
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    .ask-textarea {
+      width: 100%;
+      border: none;
       outline: none;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text-primary);
+      resize: none;
+      background: transparent;
+      min-height: 48px;
     }
-    .query-input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+    .ask-textarea::placeholder {
+      color: var(--text-tertiary);
+    }
+    .ask-actions-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .ask-hint {
+      font-size: 11.5px;
+      color: var(--text-tertiary);
+    }
+
+    .suggested-prompts {
+      max-width: 780px;
+      margin: 0 auto 36px auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .suggested-label {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .prompt-pill {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .prompt-pill:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+
+    /* Ask Result Container */
+    .answer-card {
+      max-width: 780px;
+      margin: 0 auto 32px auto;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      display: none;
+    }
+    .answer-card-header {
+      padding: 14px 20px;
+      background: var(--bg-surface-subtle);
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .answer-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .answer-body {
+      padding: 24px 24px 20px 24px;
+      font-size: 14.5px;
+      color: var(--text-primary);
+      line-height: 1.65;
+    }
+    .answer-body p {
+      margin-bottom: 12px;
+    }
+    .answer-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Refusal / Insufficient Evidence Container */
+    .refusal-container {
+      padding: 16px 20px;
+      background: var(--status-amber-bg);
+      border-left: 3px solid var(--status-amber-text);
+      border-radius: var(--radius-sm);
+      margin: 0 24px 20px 24px;
+    }
+    .refusal-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--status-amber-text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .refusal-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Contradiction Side-by-Side Comparison Container */
+    .contradiction-box {
+      margin: 0 24px 20px 24px;
+      background: var(--status-purple-bg);
+      border: 1px solid var(--status-purple-border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+    .contradiction-header {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--status-purple-text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .contradiction-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .contradiction-side-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-size: 12.5px;
+    }
+
+    /* Citation Sources Grid */
+    .sources-section {
+      padding: 16px 24px 24px 24px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-surface-subtle);
+    }
+    .sources-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sources-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .source-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: border-color 0.12s ease;
+    }
+    .source-card:hover {
+      border-color: var(--border-strong);
+    }
+    .source-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .source-doc-name {
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 140px;
+    }
+    .source-excerpt {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .source-card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10.5px;
+      color: var(--text-tertiary);
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 6px;
+      margin-top: auto;
+    }
+
+    /* Score Progress Bar */
+    .mini-bar {
+      width: 48px;
+      height: 4px;
+      background: var(--border-default);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .mini-bar-fill {
+      height: 100%;
+      background: var(--accent-indigo);
+      border-radius: 999px;
+    }
 
     /* Trace Modal Drawer */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(4px);
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(2px);
       display: none;
       justify-content: flex-end;
       z-index: 100;
     }
     .modal-drawer {
-      width: 750px;
-      max-width: 90vw;
+      width: 740px;
+      max-width: 95vw;
       background: var(--bg-surface);
-      border-left: 1px solid var(--border-strong);
+      border-left: 1px solid var(--border-default);
+      box-shadow: var(--shadow-lg);
       height: 100%;
       overflow-y: auto;
-      padding: 28px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
     }
-    .trace-step {
-      border-left: 2px solid var(--border-strong);
-      padding-left: 20px;
-      margin-bottom: 24px;
-      position: relative;
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-default);
+      margin-bottom: 20px;
     }
-    .trace-step::before {
-      content: "";
-      position: absolute;
-      left: -7px;
-      top: 0px;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--accent-blue);
-      border: 2px solid var(--bg-surface);
+
+    .pipeline-stage {
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      overflow: hidden;
+      background: var(--bg-surface);
     }
-    .trace-step-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #fff;
+    .pipeline-stage-header {
+      padding: 12px 16px;
+      background: var(--bg-surface-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .pipeline-stage-header:hover {
+      background: var(--bg-hover);
+    }
+    .pipeline-stage-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 6px;
     }
+    .pipeline-stage-content {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border-default);
+      font-size: 12.5px;
+    }
+
     .code-box {
-      background: var(--bg-base);
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      padding: 12px;
+      background: var(--bg-page);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
       font-family: var(--font-mono);
-      font-size: 12px;
-      color: #cbd5e1;
+      font-size: 11.5px;
+      color: var(--text-secondary);
       overflow-x: auto;
       margin-top: 6px;
       white-space: pre-wrap;
     }
 
-    /* Score Bar Visualizer */
-    .bar-container {
-      width: 100%;
-      height: 8px;
-      background: var(--bg-surface-elevated);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 4px;
+    /* Upload Document Modal */
+    .modal-center-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
     }
-    .bar-fill {
-      height: 100%;
-      background: var(--accent-blue);
+    .modal-dialog {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      width: 520px;
+      max-width: 90vw;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+    .modal-dialog-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-dialog-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .form-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .form-input, .form-select {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      font-size: 13px;
+      color: var(--text-primary);
+      outline: none;
+      font-family: var(--font-sans);
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+    }
+
+    /* Skeleton Pulse */
+    .skeleton-line {
+      height: 12px;
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 200% 100%;
+      animation: pulse 1.5s infinite;
       border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    @keyframes pulse {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Responsive */
+    @media (max-width: 860px) {
+      body { flex-direction: column; }
+      aside { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-default); }
+      nav { flex-direction: row; overflow-x: auto; gap: 8px; }
+      .nav-group-title { display: none; }
+      .sidebar-footer { display: none; }
+      .contradiction-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Sidebar -->
+  <!-- Minimal Left Sidebar -->
   <aside>
-    <div class="brand">
+    <div class="brand-area">
       <div class="brand-title">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-        AI KNOWLEDGE SYSTEM
+        <div class="brand-logo-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        AI Knowledge System
       </div>
-      <div class="brand-sub">Reliability & Governance Platform</div>
+      <div class="brand-subtitle">Control Plane & Observability</div>
     </div>
 
     <nav>
-      <div class="nav-item active" onclick="switchTab('overview')">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-        Overview
+      <!-- Knowledge Section -->
+      <div class="nav-group">
+        <div class="nav-group-title">Knowledge</div>
+        <div class="nav-group-items">
+          <div class="nav-item" onclick="switchTab('documents')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+            Documents
+          </div>
+          <div class="nav-item" onclick="switchTab('search')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            Search
+          </div>
+        </div>
       </div>
-      <div class="nav-item" onclick="switchTab('queries')">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        Query Explorer
+
+      <!-- AI Section -->
+      <div class="nav-group">
+        <div class="nav-group-title">AI Engine</div>
+        <div class="nav-group-items">
+          <div class="nav-item active" onclick="switchTab('ask')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Ask Knowledge
+            <span class="nav-badge-pill">Core</span>
+          </div>
+          <div class="nav-item" onclick="switchTab('queries')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Query History
+          </div>
+        </div>
       </div>
-      <div class="nav-item" onclick="switchTab('retrieval')">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>
-        Retrieval Analysis
+
+      <!-- Evaluation Section -->
+      <div class="nav-group">
+        <div class="nav-group-title">Evaluation</div>
+        <div class="nav-group-items">
+          <div class="nav-item" onclick="switchTab('evaluation')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            RAG Evaluation
+          </div>
+          <div class="nav-item" onclick="switchTab('reliability')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+            Reliability
+          </div>
+        </div>
       </div>
-      <div class="nav-item" onclick="switchTab('evaluation')">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-        Ragas Evaluation
-      </div>
-      <div class="nav-item" onclick="switchTab('knowledge')">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
-        Knowledge Base
-      </div>
-      <div class="nav-item" onclick="switchTab('reliability')">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
-        Reliability & Safety
+
+      <!-- System Section -->
+      <div class="nav-group">
+        <div class="nav-group-title">System</div>
+        <div class="nav-group-items">
+          <div class="nav-item" onclick="switchTab('overview')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            Overview
+          </div>
+          <div class="nav-item" onclick="switchTab('settings')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Settings
+          </div>
+        </div>
       </div>
     </nav>
 
-    <div class="system-status-box">
+    <!-- Sidebar Status -->
+    <div class="sidebar-footer">
       <div class="status-row">
-        <span>Engine Status</span>
-        <span><span class="status-dot"></span>Active</span>
+        <span>Engine</span>
+        <span style="color: var(--text-primary); font-weight: 500;"><span class="status-indicator-dot"></span>Active</span>
       </div>
       <div class="status-row">
         <span>Model</span>
-        <span id="sidebar-model" style="font-family: var(--font-mono); color: #fff;">llama3:latest</span>
+        <span id="sidebar-model" style="font-family: var(--font-mono); font-size: 10.5px; color: var(--text-secondary);">llama3:latest</span>
       </div>
       <div class="status-row">
         <span>Embedding</span>
-        <span style="font-family: var(--font-mono); color: #94a3b8;">bge-small-en</span>
+        <span style="font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary);">bge-small-en</span>
       </div>
     </div>
   </aside>
 
-  <!-- Main View -->
+  <!-- Main Content -->
   <main>
     <header>
-      <div class="header-title">
-        <h1 id="page-title">System Overview</h1>
-        <p id="page-sub">Operational health, query volumes, and reliability guardrail metrics</p>
+      <div class="header-breadcrumb">
+        <h1 id="page-title">Ask your knowledge base</h1>
+        <p id="page-sub">Get answers grounded in verified organizational knowledge.</p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-secondary" onclick="refreshCurrentTab()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+        <button class="btn btn-secondary btn-sm" onclick="openUploadModal()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload Document
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="refreshCurrentTab()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
           Refresh
         </button>
       </div>
@@ -450,190 +981,325 @@
 
     <div class="content-container">
 
-      <!-- SECTION 1: OVERVIEW -->
-      <section id="sec-overview">
-        <div class="grid-kpi">
-          <div class="kpi-card">
-            <div class="kpi-label">Total Documents</div>
-            <div class="kpi-value" id="kpi-docs">-</div>
-            <div class="kpi-sub"><span id="kpi-chunks">-</span> chunks indexed</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Total Questions</div>
-            <div class="kpi-value" id="kpi-queries">-</div>
-            <div class="kpi-sub">Traceable requests</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Acceptance Rate</div>
-            <div class="kpi-value" id="kpi-acceptance" style="color: var(--accent-emerald);">-</div>
-            <div class="kpi-sub">Fully supported answers</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Refusal Rate</div>
-            <div class="kpi-value" id="kpi-refusal" style="color: var(--accent-amber);">-</div>
-            <div class="kpi-sub">Guarded against hallucinations</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Avg Retrieval Score</div>
-            <div class="kpi-value" id="kpi-avg-retrieval">-</div>
-            <div class="kpi-sub">Cosine similarity</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Avg Faithfulness</div>
-            <div class="kpi-value" id="kpi-avg-faithfulness" style="color: #38bdf8;">-</div>
-            <div class="kpi-sub">Claim support ratio</div>
+      <!-- SECTION: ASK KNOWLEDGE (Primary Experience) -->
+      <section id="sec-ask">
+        <div class="ask-hero">
+          <h2>Ask your knowledge base</h2>
+          <p>Get answers grounded in verified organizational knowledge.</p>
+        </div>
+
+        <div class="ask-input-box">
+          <textarea id="ask-input" class="ask-textarea" placeholder="What would you like to know?" rows="2"></textarea>
+          <div class="ask-actions-bar">
+            <span class="ask-hint">Press <kbd style="font-family: var(--font-mono); background: var(--bg-hover); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--border-default); font-size: 10px;">↵ Enter</kbd> to submit</span>
+            <button id="btn-submit-ask" class="btn btn-primary" onclick="submitAsk()">
+              <span>Ask Knowledge Base</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
           </div>
         </div>
 
+        <div class="suggested-prompts">
+          <span class="suggested-label">Try asking:</span>
+          <span class="prompt-pill" onclick="fillPrompt('When are international business flights eligible for Premium Economy class booking?')">Flight booking policy</span>
+          <span class="prompt-pill" onclick="fillPrompt('How many annual vacation days do employees receive?')">Vacation days policy</span>
+          <span class="prompt-pill" onclick="fillPrompt('How many peer approvals are required for pull requests before merging?')">PR approval standard</span>
+          <span class="prompt-pill" onclick="fillPrompt('What are the rules regarding deploying to production on Fridays?')">Friday deployments</span>
+        </div>
+
+        <!-- Skeleton Loading State -->
+        <div id="ask-skeleton" style="max-width: 780px; margin: 0 auto 32px auto; display: none;">
+          <div class="panel" style="padding: 24px;">
+            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+              <div class="skeleton-line" style="width: 100px; height: 20px;"></div>
+              <div class="skeleton-line" style="width: 70px; height: 20px;"></div>
+            </div>
+            <div class="skeleton-line" style="width: 95%;"></div>
+            <div class="skeleton-line" style="width: 90%;"></div>
+            <div class="skeleton-line" style="width: 75%;"></div>
+          </div>
+        </div>
+
+        <!-- Result Container -->
+        <div id="answer-card" class="answer-card">
+          <div class="answer-card-header">
+            <div class="answer-meta">
+              <span id="answer-reliability-badge" class="badge badge-verified">Verified</span>
+              <span id="answer-confidence-badge" class="badge badge-neutral" style="font-family: var(--font-mono);">Confidence: High</span>
+              <span id="answer-model-badge" style="font-size: 11.5px; color: var(--text-muted); font-family: var(--font-mono);">llama3:latest</span>
+            </div>
+            <button id="btn-trace-link" class="btn btn-secondary btn-sm" onclick="inspectLatestTrace()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Inspect Pipeline Trace
+            </button>
+          </div>
+
+          <!-- Intentional Refusal Notice (Shown if insufficient evidence) -->
+          <div id="answer-refusal-box" class="refusal-container" style="display: none;">
+            <div class="refusal-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>Insufficient Evidence</span>
+            </div>
+            <div class="refusal-text" id="answer-refusal-text">
+              I couldn't find sufficient information in the available knowledge base to answer this question. The system avoids guessing or extrapolating facts.
+            </div>
+          </div>
+
+          <!-- Contradiction Box (Shown if conflicting sources) -->
+          <div id="answer-contradiction-box" class="contradiction-box" style="display: none;">
+            <div class="contradiction-header">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>Conflicting Knowledge Detected</span>
+            </div>
+            <div style="font-size: 12.5px; color: var(--text-secondary);" id="contradiction-resolution-note">
+              Retrieved documents contain divergent policies. Resolution evaluated via document status and versioning.
+            </div>
+            <div class="contradiction-grid" id="contradiction-sources-grid">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Synthesized Answer Body -->
+          <div class="answer-body" id="answer-text">
+            <!-- Rendered via JS -->
+          </div>
+
+          <!-- Retrieved Source Citations -->
+          <div class="sources-section">
+            <div class="sources-title">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span id="sources-header-count">Retrieved Evidence Sources</span>
+            </div>
+            <div class="sources-grid" id="sources-container">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: DOCUMENTS -->
+      <section id="sec-documents" style="display: none;">
         <div class="panel">
           <div class="panel-header">
-            <div class="panel-title">Recent System Error Log</div>
-            <span class="badge badge-info">Zero Unhandled Failures Target</span>
+            <div class="panel-title">
+              <span>Knowledge Base Documents</span>
+              <span class="badge badge-info" id="kb-count-badge">0 Documents</span>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openUploadModal()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Document
+            </button>
           </div>
           <div style="overflow-x: auto;">
             <table>
               <thead>
                 <tr>
-                  <th>Timestamp</th>
-                  <th>Request ID</th>
-                  <th>Endpoint</th>
-                  <th>Error Diagnostic</th>
+                  <th>Document</th>
+                  <th>Title</th>
+                  <th>Version</th>
+                  <th>Status</th>
+                  <th>Effective Range</th>
+                  <th>Chunks</th>
+                  <th>Embeddings</th>
+                  <th>Uploaded</th>
                 </tr>
               </thead>
-              <tbody id="table-errors">
-                <tr><td colspan="4" style="text-align: center; color: var(--text-dim);">Loading system error logs...</td></tr>
+              <tbody id="table-kb">
+                <tr><td colspan="8" style="text-align: center; color: var(--text-tertiary); padding: 32px;">Loading document catalog...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- SECTION 2: QUERY EXPLORER -->
-      <section id="sec-queries" style="display: none;">
-        <div class="query-tester-card">
-          <div style="font-weight: 600; font-size: 14px; color: #fff;">Live Query Tester & Execution Tracer</div>
-          <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Submit a prompt to observe real-time evidence evaluation, faithfulness verification, and decision gating.</div>
-          <div class="query-input-row">
-            <input type="text" id="live-query-input" class="query-input" placeholder="e.g. How many peer approvals are required for pull requests before merging?" value="How many peer approvals are required for pull requests before merging?">
-            <button class="btn btn-primary" onclick="executeLiveQuery()">Run Query & Trace</button>
+      <!-- SECTION: SEMANTIC SEARCH -->
+      <section id="sec-search" style="display: none;">
+        <div class="panel" style="padding: 20px; margin-bottom: 20px;">
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Semantic Vector Retrieval</div>
+          <div style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px;">Query pgvector dense cosine index directly without LLM synthesis.</div>
+          <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+            <input type="text" id="search-query-input" class="form-input" style="flex: 1;" placeholder="Enter semantic query...">
+            <button class="btn btn-primary" onclick="runSemanticSearch()">Retrieve Chunks</button>
+          </div>
+          <div style="display: flex; gap: 20px; font-size: 12px; color: var(--text-secondary);">
+            <label style="display: flex; align-items: center; gap: 6px;">
+              Top K:
+              <select id="search-topk" class="form-select" style="padding: 2px 6px;">
+                <option value="3">3</option>
+                <option value="5" selected>5</option>
+                <option value="8">8</option>
+              </select>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px;">
+              Min Similarity:
+              <select id="search-thresh" class="form-select" style="padding: 2px 6px;">
+                <option value="0.30">0.30</option>
+                <option value="0.45" selected>0.45</option>
+                <option value="0.60">0.60</option>
+              </select>
+            </label>
           </div>
         </div>
 
         <div class="panel">
           <div class="panel-header">
+            <div class="panel-title">Retrieved Matching Chunks</div>
+            <span id="search-result-count" class="badge badge-neutral">0 results</span>
+          </div>
+          <div id="search-results-list" style="padding: 16px;">
+            <div style="text-align: center; color: var(--text-tertiary); padding: 24px;">Enter a query above to inspect dense similarity results.</div>
+          </div>
+        </div>
+
+        <!-- Retrieval Analysis Insights -->
+        <div class="grid-kpi" style="margin-top: 24px;">
+          <div class="kpi-card">
+            <div class="kpi-label">Retrieval Floor</div>
+            <div class="kpi-value" id="kpi-threshold">0.45</div>
+            <div class="kpi-sub">Minimum cosine similarity</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Default Top K</div>
+            <div class="kpi-value" id="kpi-topk">5</div>
+            <div class="kpi-sub">Candidate evidence chunks</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Relevant Retrievals</div>
+            <div class="kpi-value" id="kpi-rel-count" style="color: var(--status-emerald-text);">-</div>
+            <div class="kpi-sub">Included in prompt context</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Filtered Chunks</div>
+            <div class="kpi-value" id="kpi-irrel-count" style="color: var(--status-amber-text);">-</div>
+            <div class="kpi-sub">Below relevance threshold</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+          <div class="panel" style="margin-bottom: 0;">
+            <div class="panel-header">
+              <div class="panel-title">Cosine Score Distribution</div>
+              <span class="badge badge-info">Recent Queries</span>
+            </div>
+            <div id="retrieval-distribution-bars" style="padding: 18px;">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <div class="panel" style="margin-bottom: 0;">
+            <div class="panel-header">
+              <div class="panel-title">Most Retrieved Documents</div>
+              <span class="badge badge-neutral">Hit Frequency</span>
+            </div>
+            <div style="overflow-x: auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Document</th>
+                    <th>Hits</th>
+                    <th>Frequency</th>
+                  </tr>
+                </thead>
+                <tbody id="table-top-docs">
+                  <tr><td colspan="3" style="text-align: center; color: var(--text-tertiary); padding: 24px;">Loading leaderboard...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: QUERY HISTORY & EXPLORER -->
+      <section id="sec-queries" style="display: none;">
+        <div class="panel">
+          <div class="panel-header">
             <div class="panel-title">Audited Query Traces</div>
-            <div style="display: flex; gap: 8px;">
-              <button class="btn btn-secondary" onclick="filterQueries('')">All</button>
-              <button class="btn btn-secondary" onclick="filterQueries('ACCEPTED')">Accepted</button>
-              <button class="btn btn-secondary" onclick="filterQueries('REGENERATED')">Regenerated</button>
-              <button class="btn btn-secondary" onclick="filterQueries('REFUSED')">Refused</button>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-sm" onclick="filterQueries('')">All</button>
+              <button class="btn btn-secondary btn-sm" onclick="filterQueries('ACCEPTED')">Accepted</button>
+              <button class="btn btn-secondary btn-sm" onclick="filterQueries('REGENERATED')">Regenerated</button>
+              <button class="btn btn-secondary btn-sm" onclick="filterQueries('REFUSED')">Refused</button>
             </div>
           </div>
           <div style="overflow-x: auto;">
             <table>
               <thead>
                 <tr>
-                  <th>Time</th>
-                  <th>User Question</th>
+                  <th>Timestamp</th>
+                  <th>Question</th>
                   <th>Decision</th>
                   <th>Faithfulness</th>
                   <th>Top Score</th>
                   <th>Retrieved Documents</th>
                   <th>Latency</th>
-                  <th>Audit Action</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody id="table-queries">
-                <tr><td colspan="8" style="text-align: center; color: var(--text-dim);">Loading query traces...</td></tr>
+                <tr><td colspan="8" style="text-align: center; color: var(--text-tertiary); padding: 32px;">Loading query audit traces...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- SECTION 3: RETRIEVAL ANALYSIS -->
-      <section id="sec-retrieval" style="display: none;">
+      <!-- SECTION: RAGAS EVALUATION -->
+      <section id="sec-evaluation" style="display: none;">
         <div class="grid-kpi">
           <div class="kpi-card">
-            <div class="kpi-label">Retrieval Threshold</div>
-            <div class="kpi-value" id="kpi-threshold">0.50</div>
-            <div class="kpi-sub">Minimum cosine similarity</div>
+            <div class="kpi-label">Faithfulness</div>
+            <div class="kpi-value" id="eval-faithfulness" style="color: var(--status-emerald-text);">100.0%</div>
+            <div class="kpi-sub">Factual claims grounded</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">Default Top K</div>
-            <div class="kpi-value" id="kpi-topk">5</div>
-            <div class="kpi-sub">Retrieved candidate chunks</div>
+            <div class="kpi-label">Answer Relevancy</div>
+            <div class="kpi-value" id="eval-relevancy" style="color: var(--accent-indigo);">84.6%</div>
+            <div class="kpi-sub">Target response precision</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">Relevant Retrievals</div>
-            <div class="kpi-value" id="kpi-rel-count" style="color: var(--accent-emerald);">-</div>
-            <div class="kpi-sub">Included in answer context</div>
+            <div class="kpi-label">Context Precision</div>
+            <div class="kpi-value" id="eval-precision">63.6%</div>
+            <div class="kpi-sub">Relevant chunk density</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">Gated / Filtered Chunks</div>
-            <div class="kpi-value" id="kpi-irrel-count" style="color: var(--accent-amber);">-</div>
-            <div class="kpi-sub">Below threshold or superseded</div>
+            <div class="kpi-label">Context Recall</div>
+            <div class="kpi-value" id="eval-recall">63.6%</div>
+            <div class="kpi-sub">Ground truth coverage</div>
           </div>
         </div>
 
         <div class="panel">
           <div class="panel-header">
-            <div class="panel-title">Similarity Score Distribution (Recent 100 Queries)</div>
+            <div class="panel-title">Historical Benchmark Runs</div>
+            <span class="badge badge-info">Automated Regression Pipeline</span>
           </div>
-          <div style="padding: 24px;" id="retrieval-distribution-bars">
-            <!-- Rendered by JS -->
+          <div style="overflow-x: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Run ID / Time</th>
+                  <th>Configuration</th>
+                  <th>Faithfulness</th>
+                  <th>Relevancy</th>
+                  <th>Context Precision</th>
+                  <th>Context Recall</th>
+                  <th>Latency</th>
+                </tr>
+              </thead>
+              <tbody id="table-eval-runs">
+                <tr><td colspan="7" style="text-align: center; color: var(--text-tertiary); padding: 32px;">Loading benchmark evaluation runs...</td></tr>
+              </tbody>
+            </table>
           </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">Top Retrieved Documents Leaderboard</div>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Document Name</th>
-                <th>Retrieval Frequency</th>
-                <th>Relevance Density</th>
-              </tr>
-            </thead>
-            <tbody id="table-top-docs"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- SECTION 4: RAGAS EVALUATION -->
-      <section id="sec-evaluation" style="display: none;">
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">Historical Benchmark Runs (Ragas Metrics)</div>
-            <span class="badge badge-info">Automated Pipeline Regression Suite</span>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Run ID / Time</th>
-                <th>Configuration</th>
-                <th>Faithfulness</th>
-                <th>Answer Relevancy</th>
-                <th>Context Precision</th>
-                <th>Context Recall</th>
-                <th>Avg Latency</th>
-              </tr>
-            </thead>
-            <tbody id="table-eval-runs">
-              <tr><td colspan="7" style="text-align: center; color: var(--text-dim);">Loading evaluation benchmarks...</td></tr>
-            </tbody>
-          </table>
         </div>
 
         <div class="panel" id="panel-comparison" style="display: none;">
           <div class="panel-header">
             <div class="panel-title" id="comp-title">Retrieval Configuration Comparison</div>
-            <span class="badge badge-success">Automated Experiment Delta</span>
+            <span class="badge badge-verified">Automated Experiment Delta</span>
           </div>
-          <div style="padding: 24px;">
-            <table style="margin-bottom: 20px;">
+          <div style="padding: 20px;">
+            <table style="margin-bottom: 16px;">
               <thead>
                 <tr>
                   <th>Metric</th>
@@ -645,56 +1311,29 @@
               </thead>
               <tbody id="table-comparison-deltas"></tbody>
             </table>
-            <div style="font-weight: 600; font-size: 13px; color: #fff; margin-bottom: 8px;">Key Engineering Findings:</div>
-            <ul id="comp-findings" style="padding-left: 20px; font-size: 13px; color: var(--text-muted); line-height: 1.8;"></ul>
+            <div style="font-weight: 600; font-size: 12.5px; color: var(--text-primary); margin-bottom: 6px;">Key Engineering Findings:</div>
+            <ul id="comp-findings" style="padding-left: 20px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.7;"></ul>
           </div>
         </div>
       </section>
 
-      <!-- SECTION 5: KNOWLEDGE BASE -->
-      <section id="sec-knowledge" style="display: none;">
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">Document & Version Inventory</div>
-            <span class="badge badge-info" id="kb-count-badge">0 Documents</span>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Filename</th>
-                <th>Title</th>
-                <th>Version</th>
-                <th>Status</th>
-                <th>Effective Range</th>
-                <th>Chunks</th>
-                <th>Embeddings</th>
-                <th>Uploaded</th>
-              </tr>
-            </thead>
-            <tbody id="table-kb">
-              <tr><td colspan="8" style="text-align: center; color: var(--text-dim);">Loading knowledge base catalog...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- SECTION 6: RELIABILITY -->
+      <!-- SECTION: RELIABILITY -->
       <section id="sec-reliability" style="display: none;">
         <div class="grid-kpi">
           <div class="kpi-card">
             <div class="kpi-label">Hallucinations Prevented</div>
-            <div class="kpi-value" id="kpi-hallucinations" style="color: var(--accent-rose);">-</div>
-            <div class="kpi-sub">Unsupported assertions flagged</div>
+            <div class="kpi-value" id="kpi-hallucinations" style="color: var(--status-rose-text);">-</div>
+            <div class="kpi-sub">Ungrounded assertions intercepted</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">Insufficient Evidence</div>
-            <div class="kpi-value" id="kpi-insufficient" style="color: var(--accent-amber);">-</div>
-            <div class="kpi-sub">Refused rather than guessing</div>
+            <div class="kpi-label">Insufficient Evidence Cases</div>
+            <div class="kpi-value" id="kpi-insufficient" style="color: var(--status-amber-text);">-</div>
+            <div class="kpi-sub">Controlled refusal over hallucination</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">Contradictions Detected</div>
-            <div class="kpi-value" id="kpi-contradictions" style="color: var(--accent-purple);">-</div>
-            <div class="kpi-sub">Conflicting policy clashes</div>
+            <div class="kpi-value" id="kpi-contradictions" style="color: var(--status-purple-text);">-</div>
+            <div class="kpi-sub">Conflicting policy clashes resolved</div>
           </div>
         </div>
 
@@ -703,64 +1342,231 @@
             <div class="panel-title">Unsupported Claims & Hallucination Audit Log</div>
             <span class="badge badge-warning">Zero Unverified Tolerance</span>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Request ID</th>
-                <th>User Question</th>
-                <th>Detected Unsupported Claim</th>
-                <th>Action Taken</th>
-              </tr>
-            </thead>
-            <tbody id="table-unsupported-claims">
-              <tr><td colspan="5" style="text-align: center; color: var(--text-dim);">Loading reliability audit logs...</td></tr>
-            </tbody>
-          </table>
+          <div style="overflow-x: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Request ID</th>
+                  <th>Question</th>
+                  <th>Detected Unsupported Claim</th>
+                  <th>Action Taken</th>
+                </tr>
+              </thead>
+              <tbody id="table-unsupported-claims">
+                <tr><td colspan="5" style="text-align: center; color: var(--text-tertiary); padding: 32px;">Loading reliability audit logs...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: SYSTEM OVERVIEW -->
+      <section id="sec-overview" style="display: none;">
+        <div class="grid-kpi">
+          <div class="kpi-card">
+            <div class="kpi-label">Total Documents</div>
+            <div class="kpi-value" id="kpi-docs">-</div>
+            <div class="kpi-sub"><span id="kpi-chunks">-</span> indexed chunks</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Total Questions</div>
+            <div class="kpi-value" id="kpi-queries">-</div>
+            <div class="kpi-sub">Audited RAG requests</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Answer Acceptance</div>
+            <div class="kpi-value" id="kpi-acceptance" style="color: var(--status-emerald-text);">-</div>
+            <div class="kpi-sub">Fully verified assertions</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Faithfulness Score</div>
+            <div class="kpi-value" id="kpi-avg-faithfulness" style="color: var(--accent-indigo);">-</div>
+            <div class="kpi-sub">Claim support ratio</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Refusal Rate</div>
+            <div class="kpi-value" id="kpi-refusal" style="color: var(--status-amber-text);">-</div>
+            <div class="kpi-sub">Guarded against guessing</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Avg Retrieval Score</div>
+            <div class="kpi-value" id="kpi-avg-retrieval">-</div>
+            <div class="kpi-sub">Dense cosine similarity</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Recent System Error Log</div>
+            <span class="badge badge-info">Runtime Diagnostic Log</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Request ID</th>
+                  <th>Endpoint</th>
+                  <th>Diagnostic</th>
+                </tr>
+              </thead>
+              <tbody id="table-errors">
+                <tr><td colspan="4" style="text-align: center; color: var(--text-tertiary); padding: 32px;">Loading system error logs...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: SETTINGS -->
+      <section id="sec-settings" style="display: none;">
+        <div class="panel" style="max-width: 800px;">
+          <div class="panel-header">
+            <div class="panel-title">System Configuration & Health</div>
+            <span class="badge badge-verified">Production Online</span>
+          </div>
+          <div class="panel-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+              <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 14px;">
+                <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">LLM Synthesis Engine</div>
+                <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-top: 4px;">Ollama (Local)</div>
+                <div style="font-size: 12px; font-family: var(--font-mono); color: var(--accent-indigo); margin-top: 2px;">llama3:latest</div>
+              </div>
+              <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 14px;">
+                <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Vector Embedding Model</div>
+                <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-top: 4px;">HuggingFace / PyTorch</div>
+                <div style="font-size: 12px; font-family: var(--font-mono); color: var(--text-secondary); margin-top: 2px;">BAAI/bge-small-en-v1.5 (384d)</div>
+              </div>
+            </div>
+
+            <div style="font-weight: 600; font-size: 13.5px; margin-bottom: 12px;">Active Safety Guardrail Thresholds</div>
+            <table style="margin-bottom: 24px;">
+              <tbody>
+                <tr>
+                  <td style="font-weight: 500;">Retrieval Similarity Floor</td>
+                  <td style="font-family: var(--font-mono);">0.45 (Cosine Distance)</td>
+                  <td style="color: var(--text-muted); font-size: 12px;">Chunks below threshold are discarded as irrelevant</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 500;">Faithfulness Verification Floor</td>
+                  <td style="font-family: var(--font-mono);">0.75 (Support Ratio)</td>
+                  <td style="color: var(--text-muted); font-size: 12px;">Answers with ungrounded claims are refused</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 500;">Contradiction Precedence</td>
+                  <td><span class="badge badge-verified">ACTIVE &gt; SUPERSEDED &gt; EXPIRED</span></td>
+                  <td style="color: var(--text-muted); font-size: 12px;">Deterministic conflict resolution via document versioning</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div style="font-weight: 600; font-size: 13.5px; margin-bottom: 12px;">API Endpoints & Documentation</div>
+            <div style="display: flex; gap: 10px;">
+              <a href="/docs" target="_blank" class="btn btn-secondary">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                FastAPI Swagger Docs
+              </a>
+              <a href="/openapi.json" target="_blank" class="btn btn-secondary">OpenAPI Schema JSON</a>
+            </div>
+          </div>
         </div>
       </section>
 
     </div>
   </main>
 
-  <!-- Query Trace Modal Drawer -->
+  <!-- Query Trace Drawer Modal -->
   <div class="modal-overlay" id="modal-trace" onclick="closeModal(event)">
     <div class="modal-drawer" onclick="event.stopPropagation()">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px;">
+      <div class="drawer-header">
         <div>
-          <h2 style="font-size: 18px; color: #fff;">Query Execution Trace</h2>
-          <div id="modal-request-id" style="font-family: var(--font-mono); font-size: 12px; color: var(--text-dim);"></div>
+          <h2 style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Execution Trace Inspection</h2>
+          <div id="modal-request-id" style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 2px;"></div>
         </div>
-        <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal()">Close</button>
       </div>
-
       <div id="modal-trace-steps">
         <!-- Rendered by JS -->
       </div>
     </div>
   </div>
 
-  <script>
-    let currentTab = 'overview';
+  <!-- Document Upload Modal -->
+  <div class="modal-center-overlay" id="modal-upload" onclick="closeUploadModal(event)">
+    <div class="modal-dialog" onclick="event.stopPropagation()">
+      <div class="modal-dialog-header">
+        <div style="font-weight: 600; font-size: 14px;">Upload Knowledge Document</div>
+        <button class="btn btn-secondary btn-sm" onclick="closeUploadModal()">✕</button>
+      </div>
+      <form id="upload-form" onsubmit="handleDocumentUpload(event)">
+        <div class="modal-dialog-body">
+          <div class="form-group">
+            <label class="form-label">Document File (PDF, DOCX, TXT, MD)</label>
+            <input type="file" id="upload-file" class="form-input" required accept=".pdf,.docx,.txt,.md">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Version Identifier (e.g. 2026.1 or 1.0)</label>
+            <input type="text" id="upload-version" class="form-input" value="1.0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Lifecycle Status</label>
+            <select id="upload-status" class="form-select">
+              <option value="ACTIVE" selected>ACTIVE (Authoritative)</option>
+              <option value="SUPERSEDED">SUPERSEDED (Historical)</option>
+              <option value="EXPIRED">EXPIRED (Decommissioned)</option>
+            </select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label class="form-label">Effective Date (Optional)</label>
+              <input type="date" id="upload-effective" class="form-input">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Expiration Date (Optional)</label>
+              <input type="date" id="upload-expiration" class="form-input">
+            </div>
+          </div>
+          <div id="upload-feedback" style="font-size: 12px; display: none;"></div>
+        </div>
+        <div style="padding: 14px 20px; background: var(--bg-surface-subtle); border-top: 1px solid var(--border-default); display: flex; justify-content: flex-end; gap: 8px;">
+          <button type="button" class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+          <button type="submit" id="btn-upload-submit" class="btn btn-primary">Ingest & Vectorize</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
+  <script>
+    let currentTab = 'ask';
+    let latestRequestId = null;
+
+    // --- Tab Navigation ---
     function switchTab(tabId) {
       currentTab = tabId;
       document.querySelectorAll('nav .nav-item').forEach(el => el.classList.remove('active'));
-      event.currentTarget.classList.add('active');
+      const activeNav = Array.from(document.querySelectorAll('nav .nav-item')).find(el => el.getAttribute('onclick')?.includes(`'${tabId}'`));
+      if (activeNav) activeNav.classList.add('active');
 
       document.querySelectorAll('.content-container > section').forEach(sec => sec.style.display = 'none');
-      document.getElementById('sec-' + tabId).style.display = 'block';
+      const targetSec = document.getElementById('sec-' + tabId);
+      if (targetSec) targetSec.style.display = 'block';
 
       const titles = {
-        'overview': ['System Overview', 'Operational health, query volumes, and reliability guardrail metrics'],
-        'queries': ['Query Explorer & Multi-Stage Tracing', 'Inspect individual prompts, retrieval candidates, verification scores, and decision audits'],
-        'retrieval': ['Retrieval Analysis', 'Vector cosine score distribution, threshold gating, and document frequency leaderboard'],
-        'evaluation': ['Ragas Automated Evaluation', 'Historical benchmark metrics and retrieval configuration regression analysis'],
-        'knowledge': ['Knowledge Base Inventory', 'Catalog of ingested documents, versions, lifecycle status, and embedding health'],
-        'reliability': ['Reliability & Safety Guardrails', 'Hallucination detection logs, unsupported claims, and contradiction resolution audits']
+        'ask': ['Ask your knowledge base', 'Get answers grounded in verified organizational knowledge.'],
+        'documents': ['Knowledge Base Documents', 'Ingested policy inventory, versions, lifecycle status, and embedding health.'],
+        'search': ['Semantic Vector Retrieval', 'Direct pgvector similarity search across indexed document chunks.'],
+        'queries': ['Query Explorer & Multi-Stage Tracing', 'Inspect individual prompts, retrieval candidates, verification scores, and decision audits.'],
+        'evaluation': ['Ragas Automated Evaluation', 'Historical benchmark metrics and retrieval configuration regression analysis.'],
+        'reliability': ['Reliability & Safety Guardrails', 'Hallucination detection logs, unsupported claims, and contradiction resolution audits.'],
+        'overview': ['System Overview', 'Operational health, query volumes, and reliability guardrail metrics.'],
+        'settings': ['System Settings & Engine Info', 'Configuration parameters, active models, and safety thresholds.']
       };
-      document.getElementById('page-title').innerText = titles[tabId][0];
-      document.getElementById('page-sub').innerText = titles[tabId][1];
+
+      if (titles[tabId]) {
+        document.getElementById('page-title').innerText = titles[tabId][0];
+        document.getElementById('page-sub').innerText = titles[tabId][1];
+      }
 
       refreshCurrentTab();
     }
@@ -768,10 +1574,219 @@
     async function refreshCurrentTab() {
       if (currentTab === 'overview') loadOverview();
       else if (currentTab === 'queries') loadQueries();
-      else if (currentTab === 'retrieval') loadRetrieval();
+      else if (currentTab === 'documents') loadKnowledge();
+      else if (currentTab === 'search') loadRetrieval();
       else if (currentTab === 'evaluation') loadEvaluation();
-      else if (currentTab === 'knowledge') loadKnowledge();
       else if (currentTab === 'reliability') loadReliability();
+    }
+
+    // --- Ask Knowledge (Primary Experience) ---
+    function fillPrompt(text) {
+      const input = document.getElementById('ask-input');
+      input.value = text;
+      input.focus();
+    }
+
+    // Support Cmd+Enter / Enter to submit
+    document.getElementById('ask-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submitAsk();
+      }
+    });
+
+    async function submitAsk() {
+      const input = document.getElementById('ask-input');
+      const question = input.value.trim();
+      if (!question) return;
+
+      const btn = document.getElementById('btn-submit-ask');
+      const skeleton = document.getElementById('ask-skeleton');
+      const card = document.getElementById('answer-card');
+
+      btn.disabled = true;
+      skeleton.style.display = 'block';
+      card.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/v1/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: question })
+        });
+        const data = await res.json();
+        latestRequestId = res.headers.get('X-Request-ID');
+
+        renderAnswer(data);
+      } catch (err) {
+        alert("Failed to ask question: " + err);
+      } finally {
+        skeleton.style.display = 'none';
+        btn.disabled = false;
+      }
+    }
+
+    function renderAnswer(data) {
+      const card = document.getElementById('answer-card');
+      const relBadge = document.getElementById('answer-reliability-badge');
+      const confBadge = document.getElementById('answer-confidence-badge');
+      const modelBadge = document.getElementById('answer-model-badge');
+      const answerText = document.getElementById('answer-text');
+      const refusalBox = document.getElementById('answer-refusal-box');
+      const refusalText = document.getElementById('answer-refusal-text');
+      const contraBox = document.getElementById('answer-contradiction-box');
+      const contraGrid = document.getElementById('contradiction-sources-grid');
+      const contraNote = document.getElementById('contradiction-resolution-note');
+      const sourcesContainer = document.getElementById('sources-container');
+      const sourcesCount = document.getElementById('sources-header-count');
+
+      // Model badge
+      modelBadge.innerText = data.model_name || 'llama3:latest';
+
+      // Confidence badge
+      const confScore = (data.confidence_score !== undefined) ? Math.round(data.confidence_score * 100) : 85;
+      confBadge.innerText = `Confidence: ${(data.confidence || 'high').toUpperCase()} (${confScore}%)`;
+
+      // Status / Reliability pill
+      const relStatus = data.reliability?.status || (data.reason ? 'REFUSE' : 'ACCEPT');
+      const isRefused = relStatus === 'REFUSE' || data.reason === 'INSUFFICIENT_EVIDENCE' || data.reason === 'UNVERIFIED_CLAIMS';
+      const hasConflict = data.contradiction && data.contradiction.has_conflict;
+
+      if (isRefused) {
+        relBadge.className = 'badge badge-refused';
+        relBadge.innerText = data.reason === 'INSUFFICIENT_EVIDENCE' ? 'Insufficient Evidence' : 'Refused';
+      } else if (hasConflict) {
+        relBadge.className = 'badge badge-warning';
+        relBadge.innerText = 'Conflicting Sources Handled';
+      } else {
+        relBadge.className = 'badge badge-verified';
+        relBadge.innerText = 'Verified Grounded';
+      }
+
+      // Refusal Display
+      if (isRefused) {
+        refusalBox.style.display = 'block';
+        if (data.reason === 'INSUFFICIENT_EVIDENCE') {
+          refusalText.innerText = "I couldn't find sufficient information in the available knowledge base to answer this question. The system avoids guessing or extrapolating facts.";
+        } else {
+          refusalText.innerText = data.reliability?.reason || "Response was withheld because generated claims could not be verified with high confidence against source documents.";
+        }
+      } else {
+        refusalBox.style.display = 'none';
+      }
+
+      // Contradiction Display
+      if (hasConflict && data.contradiction) {
+        contraBox.style.display = 'block';
+        contraNote.innerText = data.contradiction.resolution_rationale || "Retrieved documents contain divergent policies. Resolution evaluated via document status and versioning.";
+        contraGrid.innerHTML = data.contradiction.conflicting_sources.map(src => `
+          <div class="contradiction-side-card">
+            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${src}</div>
+            <div style="color: var(--text-muted); font-size: 11.5px;">Evaluated in cross-document contradiction check</div>
+          </div>
+        `).join('');
+      } else {
+        contraBox.style.display = 'none';
+      }
+
+      // Formatted Answer text
+      const cleanAnswer = data.answer.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+      answerText.innerHTML = `<p>${cleanAnswer}</p>`;
+
+      // Source Citations
+      const sources = data.sources || [];
+      sourcesCount.innerText = `Retrieved Evidence Citations (${sources.length})`;
+      if (sources.length === 0) {
+        sourcesContainer.innerHTML = '<div style="color: var(--text-tertiary); font-size: 12px;">No source documents referenced for this query.</div>';
+      } else {
+        sourcesContainer.innerHTML = sources.map(s => {
+          const scorePct = Math.round(s.score * 100);
+          return `
+            <div class="source-card">
+              <div>
+                <div class="source-card-top">
+                  <span class="source-doc-name" title="${s.document}">${s.document}</span>
+                  <span class="badge badge-neutral" style="font-size: 10px;">v${s.version || '1.0'}</span>
+                </div>
+                <div class="source-excerpt" title="${s.excerpt}">"${s.excerpt}"</div>
+              </div>
+              <div class="source-card-bottom">
+                <span style="font-family: var(--font-mono);">${scorePct}% match</span>
+                <div class="mini-bar">
+                  <div class="mini-bar-fill" style="width: ${scorePct}%;"></div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      card.style.display = 'block';
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    async function inspectLatestTrace() {
+      if (latestRequestId) {
+        viewTrace(latestRequestId);
+      } else {
+        // Fallback to top query in explorer
+        try {
+          const res = await fetch('/api/v1/admin/queries?limit=1');
+          const data = await res.json();
+          if (data.items && data.items.length > 0) {
+            viewTrace(data.items[0].request_id);
+          }
+        } catch (e) {
+          alert("No trace available to inspect.");
+        }
+      }
+    }
+
+    // --- Semantic Search ---
+    async function runSemanticSearch() {
+      const q = document.getElementById('search-query-input').value.trim();
+      if (!q) return;
+
+      const top_k = parseInt(document.getElementById('search-topk').value);
+      const similarity_threshold = parseFloat(document.getElementById('search-thresh').value);
+      const container = document.getElementById('search-results-list');
+      const countPill = document.getElementById('search-result-count');
+
+      container.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: 20px;">Retrieving vector embeddings...</div>';
+
+      try {
+        const res = await fetch('/api/v1/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: q, top_k, similarity_threshold })
+        });
+        const data = await res.json();
+
+        countPill.innerText = `${data.count} matches`;
+        if (data.count === 0) {
+          container.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: 24px;">No chunks matched above threshold.</div>';
+          return;
+        }
+
+        container.innerHTML = data.results.map(r => {
+          const scorePct = Math.round(r.similarity_score * 100);
+          return `
+            <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div style="font-weight: 600; font-size: 12.5px; color: var(--text-primary);">${r.document.filename} <span class="badge badge-neutral" style="font-size: 10px;">v${r.document.version}</span></div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-family: var(--font-mono); font-size: 11.5px; color: var(--accent-indigo);">${scorePct}% similarity</span>
+                  <div class="mini-bar"><div class="mini-bar-fill" style="width: ${scorePct}%;"></div></div>
+                </div>
+              </div>
+              <div style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5;">${r.content}</div>
+              <div style="font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); margin-top: 6px;">Chunk ID: ${r.chunk_id}</div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<div style="color: var(--status-rose-text); padding: 12px;">Search failed: ${err}</div>`;
+      }
     }
 
     // --- Overview Loader ---
@@ -789,14 +1804,14 @@
 
         const errTbody = document.getElementById('table-errors');
         if (!data.recent_system_errors || data.recent_system_errors.length === 0) {
-          errTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--accent-emerald);">✅ Zero operational system errors recorded. System running smoothly.</td></tr>';
+          errTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--status-emerald-text); padding: 24px;">✓ Zero unhandled system errors recorded. Engine running smoothly.</td></tr>';
         } else {
           errTbody.innerHTML = data.recent_system_errors.map(e => `
             <tr>
               <td style="font-family: var(--font-mono); font-size: 11px;">${new Date(e.timestamp).toLocaleTimeString()}</td>
               <td style="font-family: var(--font-mono); font-size: 11px;">${e.request_id || '-'}</td>
               <td><code>${e.endpoint}</code></td>
-              <td style="color: var(--accent-rose);">${e.error_message}</td>
+              <td style="color: var(--status-rose-text);">${e.error_message}</td>
             </tr>
           `).join('');
         }
@@ -821,13 +1836,13 @@
 
         const tbody = document.getElementById('table-queries');
         if (!data.items || data.items.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-dim);">No queries recorded yet. Use the Live Query Tester above to run a prompt!</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-tertiary); padding: 32px;">No queries recorded yet.</td></tr>';
           return;
         }
 
         tbody.innerHTML = data.items.map(q => {
-          let badgeClass = 'badge-success';
-          if (q.final_decision === 'REFUSED') badgeClass = 'badge-warning';
+          let badgeClass = 'badge-verified';
+          if (q.final_decision === 'REFUSED') badgeClass = 'badge-refused';
           if (q.final_decision === 'REGENERATED') badgeClass = 'badge-info';
 
           const timeStr = q.timestamp ? new Date(q.timestamp).toLocaleTimeString() : '-';
@@ -838,15 +1853,15 @@
           return `
             <tr>
               <td style="font-family: var(--font-mono); font-size: 11px;">${timeStr}</td>
-              <td style="max-width: 320px; font-weight: 500; color: #fff;">${q.question}</td>
+              <td style="max-width: 300px; font-weight: 500; color: var(--text-primary);">${q.question}</td>
               <td><span class="badge ${badgeClass}">${q.final_decision}</span></td>
               <td style="font-family: var(--font-mono);">${faithStr}</td>
               <td style="font-family: var(--font-mono);">${scoreStr}</td>
-              <td style="font-size: 12px; color: var(--text-dim); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${docsStr}</td>
-              <td style="font-family: var(--font-mono); font-size: 11px;">${q.latency_ms}ms</td>
+              <td style="font-size: 12px; color: var(--text-muted); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${docsStr}</td>
+              <td style="font-family: var(--font-mono); font-size: 11px;">${Math.round(q.latency_ms)}ms</td>
               <td>
-                <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="viewTrace('${q.request_id}')">
-                  Trace Details &rarr;
+                <button class="btn btn-secondary btn-sm" onclick="viewTrace('${q.request_id}')">
+                  Trace &rarr;
                 </button>
               </td>
             </tr>
@@ -857,82 +1872,69 @@
       }
     }
 
-    async function executeLiveQuery() {
-      const q = document.getElementById('live-query-input').value.trim();
-      if (!q) return;
-
-      const btn = event.currentTarget;
-      const originalText = btn.innerText;
-      btn.innerText = 'Processing RAG...';
-      btn.disabled = true;
-
-      try {
-        const res = await fetch('/api/v1/ask', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: q })
-        });
-        const data = await res.json();
-        const reqId = res.headers.get('X-Request-ID');
-        await loadQueries();
-        if (reqId) viewTrace(reqId);
-      } catch (err) {
-        alert("Query error: " + err);
-      } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
-      }
-    }
-
-    // --- Trace Detail Modal ---
+    // --- Trace Detail Drawer ---
     async function viewTrace(requestId) {
       try {
         const res = await fetch(`/api/v1/admin/queries/${requestId}`);
         const trace = await res.json();
 
-        document.getElementById('modal-request-id').innerText = `Request Correlation ID: ${trace.request_id}`;
+        document.getElementById('modal-request-id').innerText = `Correlation ID: ${trace.request_id} • Latency: ${Math.round(trace.latency_ms)}ms`;
         const container = document.getElementById('modal-trace-steps');
 
-        let stepsHtml = `
-          <div class="trace-step">
-            <div class="trace-step-title">1. Query Ingestion & Keyword Analysis</div>
-            <div>User Query: <b style="color: #fff;">${trace.question}</b></div>
-            <div class="code-box">Cleaned: ${trace.cleaned_query}\nTop K: ${trace.top_k} | Similarity Threshold: ${trace.similarity_threshold}</div>
-          </div>
+        const stages = [
+          {
+            num: 1,
+            title: "Question Ingestion & Normalization",
+            desc: `User query cleaned and prepared for dense embedding.`,
+            content: `<b>Cleaned Query:</b> ${trace.cleaned_query}\n<b>Top K:</b> ${trace.top_k} | <b>Threshold:</b> ${trace.similarity_threshold}`
+          },
+          {
+            num: 2,
+            title: "Dense Vector Retrieval (pgvector)",
+            desc: `Retrieved ${trace.retrieval_count} candidate chunks with cosine similarity.`,
+            content: `<b>Top Score:</b> ${trace.top_similarity_score ?? 'N/A'}\n<b>Chunks:</b>\n` + JSON.stringify(trace.pipeline_stages?.find(s => s.stage === 'retrieval')?.chunks || [], null, 2)
+          },
+          {
+            num: 3,
+            title: "Pre-Generation Evidence Sufficiency",
+            desc: `Gating evaluation before invoking LLM synthesis.`,
+            content: `<b>Status:</b> ${trace.is_sufficient ? 'SUFFICIENT' : 'INSUFFICIENT'}\n<b>Reason:</b> ${trace.sufficiency_reason || 'Retrieved chunks exceed relevance floor'}`
+          },
+          {
+            num: 4,
+            title: "Contradiction & Document Versioning",
+            desc: `Cross-source factual discrepancy inspection.`,
+            content: `<b>Status:</b> ${trace.contradiction_status || 'AGREE'}`
+          },
+          {
+            num: 5,
+            title: "LLM Generation & Verification",
+            desc: `Prompt assembled with strict grounding rules.`,
+            content: `<b>Model:</b> ${trace.model_name || 'llama3:latest'}\n<b>Faithfulness:</b> ${trace.faithfulness_score !== null ? (trace.faithfulness_score * 100).toFixed(0) + '%' : '100%'}\n<b>Unsupported Claims:</b> ${trace.unsupported_claims?.length || 0}\n\n<b>Answer:</b>\n${trace.generated_answer}`
+          },
+          {
+            num: 6,
+            title: "Final Decision & Output Gating",
+            desc: `Final reliability verdict.`,
+            content: `<b>Final Decision:</b> ${trace.final_decision}\n<b>Refusal Reason:</b> ${trace.refusal_reason || 'None (Accepted)'}`
+          }
+        ];
 
-          <div class="trace-step">
-            <div class="trace-step-title">2. Dense Vector Retrieval (pgvector)</div>
-            <div>Retrieved Chunks: <b style="color: #fff;">${trace.retrieval_count}</b> | Top Score: <b>${trace.top_similarity_score ?? 'N/A'}</b></div>
-            <div class="code-box">${JSON.stringify(trace.pipeline_stages.find(s => s.stage === 'retrieval')?.chunks || [], null, 2)}</div>
+        container.innerHTML = stages.map(s => `
+          <div class="pipeline-stage">
+            <div class="pipeline-stage-header" onclick="this.nextElementSibling.style.display = (this.nextElementSibling.style.display === 'none' ? 'block' : 'none')">
+              <div class="pipeline-stage-title">
+                <span style="font-family: var(--font-mono); font-size: 11px; background: var(--bg-surface); border: 1px solid var(--border-default); width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">${s.num}</span>
+                <span>${s.title}</span>
+              </div>
+              <span style="font-size: 11px; color: var(--text-muted);">${s.desc}</span>
+            </div>
+            <div class="pipeline-stage-content">
+              <div class="code-box">${s.content}</div>
+            </div>
           </div>
+        `).join('');
 
-          <div class="trace-step">
-            <div class="trace-step-title">3. Pre-Generation Evidence Sufficiency Gating</div>
-            <div>Sufficiency Check: <span class="badge ${trace.is_sufficient ? 'badge-success' : 'badge-danger'}">${trace.is_sufficient ? 'SUFFICIENT' : 'INSUFFICIENT'}</span></div>
-            ${trace.sufficiency_reason ? `<div class="code-box">Reason: ${trace.sufficiency_reason}</div>` : ''}
-          </div>
-
-          <div class="trace-step">
-            <div class="trace-step-title">4. Contradiction & Document Versioning Analysis</div>
-            <div>Status: <span class="badge ${trace.contradiction_status === 'CONFLICT' ? 'badge-danger' : 'badge-success'}">${trace.contradiction_status || 'AGREE'}</span></div>
-          </div>
-
-          <div class="trace-step">
-            <div class="trace-step-title">5. LLM Generation & Post-Verification</div>
-            <div>Model: <b style="color: #fff;">${trace.model_name}</b> | Faithfulness: <b>${trace.faithfulness_score !== null ? (trace.faithfulness_score * 100).toFixed(0) + '%' : '100%'}</b></div>
-            <div>Unsupported Claims: <b style="color: ${trace.unsupported_claims.length ? 'var(--accent-rose)' : 'var(--accent-emerald)'};">${trace.unsupported_claims.length}</b></div>
-            <div class="code-box">Final Answer:\n${trace.generated_answer}</div>
-          </div>
-
-          <div class="trace-step">
-            <div class="trace-step-title">6. Reliability Decision & Output Formatting</div>
-            <div>Final Decision: <span class="badge ${trace.final_decision === 'ACCEPTED' ? 'badge-success' : (trace.final_decision === 'REFUSED' ? 'badge-warning' : 'badge-info')}">${trace.final_decision}</span></div>
-            ${trace.refusal_reason ? `<div>Refusal Reason: <code style="color: var(--accent-amber);">${trace.refusal_reason}</code></div>` : ''}
-            <div>Execution Latency: <b style="font-family: var(--font-mono);">${trace.latency_ms}ms</b></div>
-          </div>
-        `;
-
-        container.innerHTML = stepsHtml;
         document.getElementById('modal-trace').style.display = 'flex';
       } catch (err) {
         alert("Failed to load trace details: " + err);
@@ -943,50 +1945,34 @@
       document.getElementById('modal-trace').style.display = 'none';
     }
 
-    // --- Retrieval Analysis Loader ---
-    async function loadRetrieval() {
+    // --- Knowledge Base Loader ---
+    async function loadKnowledge() {
       try {
-        const res = await fetch('/api/v1/admin/retrieval');
+        const res = await fetch('/api/v1/admin/knowledge-base');
         const data = await res.json();
+        document.getElementById('kb-count-badge').innerText = `${data.total_documents} Documents`;
 
-        document.getElementById('kpi-threshold').innerText = data.current_retrieval_threshold.toFixed(2);
-        document.getElementById('kpi-topk').innerText = data.default_top_k;
-        document.getElementById('kpi-rel-count').innerText = data.relevant_retrievals_count;
-        document.getElementById('kpi-irrel-count').innerText = data.irrelevant_retrievals_count;
+        const tbody = document.getElementById('table-kb');
+        tbody.innerHTML = data.documents.map(d => {
+          let statusBadge = 'badge-verified';
+          if (d.status === 'SUPERSEDED') statusBadge = 'badge-warning';
+          if (d.status === 'EXPIRED') statusBadge = 'badge-danger';
 
-        // Render distribution bars
-        const barsContainer = document.getElementById('retrieval-distribution-bars');
-        const total = Object.values(data.score_distribution).reduce((a, b) => a + b, 0) || 1;
-        barsContainer.innerHTML = Object.entries(data.score_distribution).map(([range, count]) => {
-          const pct = ((count / total) * 100).toFixed(1);
           return `
-            <div style="margin-bottom: 14px;">
-              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-                <span style="font-family: var(--font-mono); color: #fff;">Cosine ${range}</span>
-                <span style="color: var(--text-dim);">${count} queries (${pct}%)</span>
-              </div>
-              <div class="bar-container">
-                <div class="bar-fill" style="width: ${pct}%;"></div>
-              </div>
-            </div>
+            <tr>
+              <td><b style="color: var(--text-primary);">${d.filename}</b></td>
+              <td>${d.title}</td>
+              <td style="font-family: var(--font-mono);">v${d.version}</td>
+              <td><span class="badge ${statusBadge}">${d.status}</span></td>
+              <td style="font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted);">${d.effective_date || 'Current'} &rarr; ${d.expiration_date || 'Indefinite'}</td>
+              <td style="font-family: var(--font-mono); font-weight: 500;">${d.chunk_count}</td>
+              <td><span class="badge badge-info">${d.embedding_status}</span></td>
+              <td style="font-size: 11.5px; color: var(--text-muted);">${d.created_at ? new Date(d.created_at).toLocaleDateString() : '-'}</td>
+            </tr>
           `;
         }).join('');
-
-        // Top docs table
-        const topDocsTbody = document.getElementById('table-top-docs');
-        topDocsTbody.innerHTML = data.top_retrieved_documents.map(d => `
-          <tr>
-            <td><b style="color: #fff;">${d.document}</b></td>
-            <td style="font-family: var(--font-mono);">${d.count} hits</td>
-            <td>
-              <div class="bar-container" style="max-width: 200px;">
-                <div class="bar-fill" style="width: ${Math.min(100, d.count * 10)}%;"></div>
-              </div>
-            </td>
-          </tr>
-        `).join('');
       } catch (err) {
-        console.error("Failed to load retrieval analysis:", err);
+        console.error("Failed to load knowledge base:", err);
       }
     }
 
@@ -998,15 +1984,23 @@
 
         const tbody = document.getElementById('table-eval-runs');
         if (!data.runs || data.runs.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-dim);">No benchmark runs saved. Run `python -m evaluation.run` to generate benchmarks.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-tertiary); padding: 32px;">No benchmark evaluation runs saved.</td></tr>';
           return;
+        }
+
+        const latest = data.runs[0];
+        if (latest && latest.summary_metrics) {
+          document.getElementById('eval-faithfulness').innerText = (latest.summary_metrics.faithfulness * 100).toFixed(1) + '%';
+          document.getElementById('eval-relevancy').innerText = (latest.summary_metrics.answer_relevancy * 100).toFixed(1) + '%';
+          document.getElementById('eval-precision').innerText = (latest.summary_metrics.context_precision * 100).toFixed(1) + '%';
+          document.getElementById('eval-recall').innerText = (latest.summary_metrics.context_recall * 100).toFixed(1) + '%';
         }
 
         tbody.innerHTML = data.runs.map(r => `
           <tr>
-            <td style="font-family: var(--font-mono); font-size: 11px;"><b style="color: #fff;">${r.run_id}</b><br><span style="color: var(--text-dim);">${new Date(r.timestamp).toLocaleString()}</span></td>
+            <td style="font-family: var(--font-mono); font-size: 11px;"><b style="color: var(--text-primary);">${r.run_id}</b><br><span style="color: var(--text-tertiary);">${new Date(r.timestamp).toLocaleString()}</span></td>
             <td><span class="badge badge-info">${r.config_name}</span> (top_k=${r.retrieval_config.top_k})</td>
-            <td style="font-family: var(--font-mono); font-weight: 600; color: #38bdf8;">${(r.summary_metrics.faithfulness * 100).toFixed(1)}%</td>
+            <td style="font-family: var(--font-mono); font-weight: 600; color: var(--status-emerald-text);">${(r.summary_metrics.faithfulness * 100).toFixed(1)}%</td>
             <td style="font-family: var(--font-mono);">${(r.summary_metrics.answer_relevancy * 100).toFixed(1)}%</td>
             <td style="font-family: var(--font-mono);">${(r.summary_metrics.context_precision * 100).toFixed(1)}%</td>
             <td style="font-family: var(--font-mono);">${(r.summary_metrics.context_recall * 100).toFixed(1)}%</td>
@@ -1017,12 +2011,12 @@
         if (data.latest_comparison) {
           const comp = data.latest_comparison;
           document.getElementById('panel-comparison').style.display = 'block';
-          document.getElementById('comp-title').innerText = `Automated Comparison: ${comp.config_a_name} vs. ${comp.config_b_name}`;
+          document.getElementById('comp-title').innerText = `Comparison: ${comp.config_a_name} vs. ${comp.config_b_name}`;
 
           const deltaTbody = document.getElementById('table-comparison-deltas');
           deltaTbody.innerHTML = Object.entries(comp.metric_deltas).map(([k, d]) => {
             const sign = d.delta > 0 ? '+' : '';
-            const color = d.delta > 0 ? 'var(--accent-emerald)' : (d.delta < 0 ? 'var(--accent-rose)' : 'var(--text-dim)');
+            const color = d.delta > 0 ? 'var(--status-emerald-text)' : (d.delta < 0 ? 'var(--status-rose-text)' : 'var(--text-muted)');
             return `
               <tr>
                 <td><b>${k.replace('_', ' ').toUpperCase()}</b></td>
@@ -1037,38 +2031,7 @@
           document.getElementById('comp-findings').innerHTML = comp.key_findings.map(f => `<li>${f}</li>`).join('');
         }
       } catch (err) {
-        console.error("Failed to load evaluation history:", err);
-      }
-    }
-
-    // --- Knowledge Base Loader ---
-    async function loadKnowledge() {
-      try {
-        const res = await fetch('/api/v1/admin/knowledge-base');
-        const data = await res.json();
-        document.getElementById('kb-count-badge').innerText = `${data.total_documents} Documents`;
-
-        const tbody = document.getElementById('table-kb');
-        tbody.innerHTML = data.documents.map(d => {
-          let statusBadge = 'badge-success';
-          if (d.status === 'SUPERSEDED') statusBadge = 'badge-warning';
-          if (d.status === 'EXPIRED') statusBadge = 'badge-danger';
-
-          return `
-            <tr>
-              <td><b style="color: #fff;">${d.filename}</b></td>
-              <td>${d.title}</td>
-              <td style="font-family: var(--font-mono);">v${d.version}</td>
-              <td><span class="badge ${statusBadge}">${d.status}</span></td>
-              <td style="font-family: var(--font-mono); font-size: 11px;">${d.effective_date || 'None'} &rarr; ${d.expiration_date || 'Indefinite'}</td>
-              <td style="font-family: var(--font-mono); font-weight: 600;">${d.chunk_count}</td>
-              <td><span class="badge badge-info">${d.embedding_status}</span></td>
-              <td style="font-size: 11px; color: var(--text-dim);">${d.created_at ? new Date(d.created_at).toLocaleDateString() : '-'}</td>
-            </tr>
-          `;
-        }).join('');
-      } catch (err) {
-        console.error("Failed to load knowledge base:", err);
+        console.error("Failed to load evaluation:", err);
       }
     }
 
@@ -1084,7 +2047,7 @@
 
         const tbody = document.getElementById('table-unsupported-claims');
         if (!data.unsupported_claims_log || data.unsupported_claims_log.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--accent-emerald);">✅ Zero unverified hallucinated assertions. Strict adherence active.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--status-emerald-text); padding: 24px;">✓ Zero ungrounded assertions detected. Strict adherence active.</td></tr>';
           return;
         }
 
@@ -1092,8 +2055,8 @@
           <tr>
             <td style="font-family: var(--font-mono); font-size: 11px;">${item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : '-'}</td>
             <td style="font-family: var(--font-mono); font-size: 11px;">${item.request_id}</td>
-            <td style="max-width: 260px;">${item.question}</td>
-            <td style="color: var(--accent-rose); font-weight: 500;">"${item.claim}"</td>
+            <td style="max-width: 240px; color: var(--text-primary);">${item.question}</td>
+            <td style="color: var(--status-rose-text); font-weight: 500;">"${item.claim}"</td>
             <td><span class="badge badge-warning">${item.final_decision}</span></td>
           </tr>
         `).join('');
@@ -1102,9 +2065,132 @@
       }
     }
 
-    // Initial load
+    // --- Document Upload Modal & Submission ---
+    function openUploadModal() {
+      document.getElementById('upload-feedback').style.display = 'none';
+      document.getElementById('modal-upload').style.display = 'flex';
+    }
+    function closeUploadModal(e) {
+      if (!e || e.target.id === 'modal-upload' || e.type === 'click') {
+        document.getElementById('modal-upload').style.display = 'none';
+      }
+    }
+
+    async function handleDocumentUpload(event) {
+      event.preventDefault();
+      const fileInput = document.getElementById('upload-file');
+      if (!fileInput.files || fileInput.files.length === 0) return;
+
+      const file = fileInput.files[0];
+      const version = document.getElementById('upload-version').value;
+      const status = document.getElementById('upload-status').value;
+      const effectiveDate = document.getElementById('upload-effective').value;
+      const expirationDate = document.getElementById('upload-expiration').value;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('version', version);
+      formData.append('status', status);
+      if (effectiveDate) formData.append('effective_date', effectiveDate);
+      if (expirationDate) formData.append('expiration_date', expirationDate);
+
+      const btn = document.getElementById('btn-upload-submit');
+      const feedback = document.getElementById('upload-feedback');
+      btn.innerText = 'Vectorizing...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/v1/documents', {
+          method: 'POST',
+          body: formData
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Upload error");
+        }
+        const data = await res.json();
+        feedback.style.color = 'var(--status-emerald-text)';
+        feedback.innerText = `✓ Successfully ingested "${file.name}" (${data.chunk_count} chunks indexed).`;
+        feedback.style.display = 'block';
+
+        setTimeout(() => {
+          closeUploadModal();
+          loadKnowledge();
+          loadOverview();
+        }, 1200);
+      } catch (err) {
+        feedback.style.color = 'var(--status-rose-text)';
+        feedback.innerText = `Upload failed: ${err.message}`;
+        feedback.style.display = 'block';
+      } finally {
+        btn.innerText = 'Ingest & Vectorize';
+        btn.disabled = false;
+      }
+    }
+
+    // --- Retrieval Analysis Loader ---
+    async function loadRetrieval() {
+      try {
+        const res = await fetch('/api/v1/admin/retrieval');
+        const data = await res.json();
+        const threshEl = document.getElementById('kpi-threshold');
+        const topkEl = document.getElementById('kpi-topk');
+        const relEl = document.getElementById('kpi-rel-count');
+        const irrelEl = document.getElementById('kpi-irrel-count');
+        if (threshEl) threshEl.innerText = data.current_retrieval_threshold.toFixed(2);
+        if (topkEl) topkEl.innerText = data.default_top_k;
+        if (relEl) relEl.innerText = data.relevant_retrievals_count;
+        if (irrelEl) irrelEl.innerText = data.irrelevant_retrievals_count;
+
+        const barsContainer = document.getElementById('retrieval-distribution-bars');
+        if (barsContainer && data.score_distribution) {
+          const total = Object.values(data.score_distribution).reduce((a, b) => a + b, 0) || 1;
+          barsContainer.innerHTML = Object.entries(data.score_distribution).map(([range, count]) => {
+            const pct = Math.round((count / total) * 100);
+            return `
+              <div style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                  <span style="font-family: var(--font-mono); color: var(--text-primary);">Cosine ${range}</span>
+                  <span style="color: var(--text-muted);">${count} queries (${pct}%)</span>
+                </div>
+                <div class="mini-bar" style="width: 100%; height: 6px;">
+                  <div class="mini-bar-fill" style="width: ${pct}%;"></div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        const topDocsTbody = document.getElementById('table-top-docs');
+        if (topDocsTbody && data.top_retrieved_documents) {
+          topDocsTbody.innerHTML = data.top_retrieved_documents.map(d => `
+            <tr>
+              <td><b style="color: var(--text-primary); font-size: 12px;">${d.document}</b></td>
+              <td style="font-family: var(--font-mono);">${d.count}</td>
+              <td>
+                <div class="mini-bar" style="width: 80px; height: 6px;">
+                  <div class="mini-bar-fill" style="width: ${Math.min(100, d.count * 15)}%;"></div>
+                </div>
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.error("Failed to load retrieval analysis:", err);
+      }
+    }
+
+    // Compatibility aliases
+    window.executeLiveQuery = submitAsk;
+    window.openTraceModal = viewTrace;
+
+    // Initial boot
     window.addEventListener('DOMContentLoaded', () => {
-      loadOverview();
+      // Check if URL has tab hash e.g. #queries
+      const hash = window.location.hash.replace('#', '');
+      if (hash && ['documents', 'search', 'ask', 'queries', 'evaluation', 'reliability', 'overview', 'settings'].includes(hash)) {
+        switchTab(hash);
+      }
     });
   </script>
 </body>
