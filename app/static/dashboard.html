@@ -4,12 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Knowledge System | Control Plane & Observability</title>
+  <!-- Anti-flash theme initialization: executes synchronously before styles render -->
+  <script>
+    (function() {
+      try {
+        var saved = localStorage.getItem('ai_knowledge_theme');
+        if (saved === 'dark' || saved === 'light') {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      /* Base neutral palette (~85%) */
+      /* Base neutral palette (~85%) - Light Mode Default */
       --bg-page: #f8fafc;
       --bg-surface: #ffffff;
       --bg-surface-subtle: #fcfcfd;
@@ -52,6 +69,9 @@
       --status-purple-text: #6d28d9;
       --status-purple-border: #ddd6fe;
 
+      --skeleton-start: #f1f5f9;
+      --skeleton-mid: #e2e8f0;
+
       /* Typography */
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
@@ -62,9 +82,132 @@
       --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
       --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.06), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
 
+      --modal-backdrop: rgba(15, 23, 42, 0.4);
+
       --radius-sm: 6px;
       --radius-md: 10px;
       --radius-lg: 14px;
+    }
+
+    [data-theme="dark"] {
+      /* Dark Theme - Deliberate, Calm, Technical, Trustworthy */
+      --bg-page: #0f1115;
+      --bg-surface: #151820;
+      --bg-surface-subtle: #1b1f28;
+      --bg-hover: #222733;
+      --bg-active: rgba(99, 102, 241, 0.16);
+
+      --border-subtle: #1e222b;
+      --border-default: #272c36;
+      --border-strong: #383f4d;
+
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --text-tertiary: #4b5563;
+
+      /* Restrained Indigo / Blue Accent */
+      --accent-indigo: #6366f1;
+      --accent-indigo-hover: #818cf8;
+      --accent-indigo-subtle: rgba(99, 102, 241, 0.15);
+      --accent-indigo-border: rgba(99, 102, 241, 0.35);
+
+      /* Muted Status Colors */
+      --status-emerald-bg: rgba(16, 185, 129, 0.12);
+      --status-emerald-text: #34d399;
+      --status-emerald-border: rgba(16, 185, 129, 0.25);
+
+      --status-amber-bg: rgba(245, 158, 11, 0.12);
+      --status-amber-text: #fbbf24;
+      --status-amber-border: rgba(245, 158, 11, 0.25);
+
+      --status-rose-bg: rgba(244, 63, 94, 0.12);
+      --status-rose-text: #fb7185;
+      --status-rose-border: rgba(244, 63, 94, 0.25);
+
+      --status-blue-bg: rgba(59, 130, 246, 0.12);
+      --status-blue-text: #60a5fa;
+      --status-blue-border: rgba(59, 130, 246, 0.25);
+
+      --status-purple-bg: rgba(139, 92, 246, 0.12);
+      --status-purple-text: #c084fc;
+      --status-purple-border: rgba(139, 92, 246, 0.25);
+
+      --skeleton-start: #1b1f28;
+      --skeleton-mid: #272c36;
+
+      --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.45), 0 1px 2px -1px rgba(0, 0, 0, 0.35);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 10px 20px -3px rgba(0, 0, 0, 0.65), 0 4px 8px -4px rgba(0, 0, 0, 0.45);
+
+      --modal-backdrop: rgba(0, 0, 0, 0.7);
+    }
+
+    /* Smooth theme transitions */
+    body, aside, header, .panel, .panel-header, .kpi-card, .ask-input-box, 
+    .answer-card, .source-card, .btn-secondary, input, select, textarea, 
+    table, th, td, .sidebar-footer, .theme-switch, .theme-option, 
+    .pipeline-stage, .pipeline-stage-header, .code-box, .modal-dialog, 
+    .modal-drawer, .refusal-container, .contradiction-box, .contradiction-side-card {
+      transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-strong);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    /* Theme Switch Segmented Control */
+    .theme-switch {
+      display: inline-flex;
+      align-items: center;
+      background: var(--bg-surface-subtle);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: 2px;
+      gap: 2px;
+    }
+    .theme-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+      line-height: 1;
+    }
+    .theme-option:hover {
+      color: var(--text-primary);
+    }
+    .theme-option.active {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-weight: 600;
+      box-shadow: var(--shadow-xs);
+    }
+    .theme-icon {
+      width: 12px;
+      height: 12px;
+      stroke-width: 2.2;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -710,7 +853,7 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.4);
+      background: var(--modal-backdrop);
       backdrop-filter: blur(2px);
       display: none;
       justify-content: flex-end;
@@ -787,7 +930,7 @@
     .modal-center-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.4);
+      background: var(--modal-backdrop);
       backdrop-filter: blur(2px);
       display: none;
       align-items: center;
@@ -838,13 +981,13 @@
     }
     .form-input:focus, .form-select:focus {
       border-color: var(--accent-indigo);
-      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+      box-shadow: 0 0 0 2px var(--accent-indigo-subtle);
     }
 
     /* Skeleton Pulse */
     .skeleton-line {
       height: 12px;
-      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background: linear-gradient(90deg, var(--skeleton-start) 25%, var(--skeleton-mid) 50%, var(--skeleton-start) 75%);
       background-size: 200% 100%;
       animation: pulse 1.5s infinite;
       border-radius: 4px;
@@ -957,6 +1100,12 @@
         <span>Embedding</span>
         <span style="font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary);">bge-small-en</span>
       </div>
+      <div class="status-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+        <span>Theme</span>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleTheme()" id="sidebar-theme-toggle" style="padding: 2px 8px; font-size: 11px; font-weight: 500;" title="Toggle Light / Dark mode">
+          <span id="sidebar-theme-text">☀️ Light</span>
+        </button>
+      </div>
     </div>
   </aside>
 
@@ -968,6 +1117,18 @@
         <p id="page-sub">Get answers grounded in verified organizational knowledge.</p>
       </div>
       <div class="header-actions">
+        <!-- Theme Toggle Switch -->
+        <div class="theme-switch" role="radiogroup" aria-label="Color theme">
+          <button type="button" class="theme-option" id="theme-btn-light" onclick="setTheme('light')" title="Switch to Light mode" aria-label="Light mode">
+            <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            <span>Light</span>
+          </button>
+          <button type="button" class="theme-option" id="theme-btn-dark" onclick="setTheme('dark')" title="Switch to Dark mode" aria-label="Dark mode">
+            <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            <span>Dark</span>
+          </button>
+        </div>
+
         <button class="btn btn-secondary btn-sm" onclick="openUploadModal()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           Upload Document
@@ -1268,6 +1429,22 @@
           </div>
         </div>
 
+        <!-- Quality Benchmark Trends Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Quality Benchmark Metrics Across Runs</div>
+            <div style="display: flex; gap: 14px; font-size: 11.5px; color: var(--text-muted); align-items: center; flex-wrap: wrap;">
+              <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--status-emerald-text); display: inline-block;"></span>Faithfulness</span>
+              <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-indigo); display: inline-block;"></span>Relevancy</span>
+              <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--status-blue-text); display: inline-block;"></span>Precision</span>
+              <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--status-purple-text); display: inline-block;"></span>Recall</span>
+            </div>
+          </div>
+          <div id="eval-chart-container" style="padding: 16px 20px; overflow-x: auto;">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
         <div class="panel">
           <div class="panel-header">
             <div class="panel-title">Historical Benchmark Runs</div>
@@ -1461,6 +1638,24 @@
               </tbody>
             </table>
 
+            <div style="font-weight: 600; font-size: 13.5px; margin-bottom: 12px;">Interface Appearance & Theme</div>
+            <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 600; font-size: 13px; color: var(--text-primary);">Theme Preference</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Persisted across sessions with seamless system preference fallback.</div>
+              </div>
+              <div class="theme-switch" role="radiogroup" aria-label="Settings theme selection">
+                <button type="button" class="theme-option" id="settings-theme-light" onclick="setTheme('light')">
+                  <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                  <span>Light</span>
+                </button>
+                <button type="button" class="theme-option" id="settings-theme-dark" onclick="setTheme('dark')">
+                  <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                  <span>Dark</span>
+                </button>
+              </div>
+            </div>
+
             <div style="font-weight: 600; font-size: 13.5px; margin-bottom: 12px;">API Endpoints & Documentation</div>
             <div style="display: flex; gap: 10px;">
               <a href="/docs" target="_blank" class="btn btn-secondary">
@@ -1540,6 +1735,56 @@
   <script>
     let currentTab = 'ask';
     let latestRequestId = null;
+
+    // --- Theme Management ---
+    function setTheme(theme, persist = true) {
+      if (theme !== 'dark' && theme !== 'light') theme = 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+      if (persist) {
+        localStorage.setItem('ai_knowledge_theme', theme);
+      }
+      updateThemeUI(theme);
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      setTheme(next, true);
+    }
+
+    function updateThemeUI(theme) {
+      const isDark = theme === 'dark';
+      // Header toggle
+      const btnLight = document.getElementById('theme-btn-light');
+      const btnDark = document.getElementById('theme-btn-dark');
+      if (btnLight && btnDark) {
+        btnLight.classList.toggle('active', !isDark);
+        btnDark.classList.toggle('active', isDark);
+      }
+
+      // Settings page toggle
+      const setLight = document.getElementById('settings-theme-light');
+      const setDark = document.getElementById('settings-theme-dark');
+      if (setLight && setDark) {
+        setLight.classList.toggle('active', !isDark);
+        setDark.classList.toggle('active', isDark);
+      }
+
+      // Sidebar button label
+      const sidebarText = document.getElementById('sidebar-theme-text');
+      if (sidebarText) {
+        sidebarText.innerText = isDark ? '🌙 Dark' : '☀️ Light';
+      }
+    }
+
+    // Auto-listen for OS preference changes when no explicit manual override is saved
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        if (!localStorage.getItem('ai_knowledge_theme')) {
+          setTheme(e.matches ? 'dark' : 'light', false);
+        }
+      });
+    }
 
     // --- Tab Navigation ---
     function switchTab(tabId) {
@@ -1996,6 +2241,65 @@
           document.getElementById('eval-recall').innerText = (latest.summary_metrics.context_recall * 100).toFixed(1) + '%';
         }
 
+        // Render theme-adaptive SVG metric progression chart
+        const chartBox = document.getElementById('eval-chart-container');
+        if (chartBox && data.runs && data.runs.length > 0) {
+          const runsReversed = [...data.runs].reverse();
+          const svgW = 760;
+          const svgH = 150;
+          const padL = 45;
+          const padR = 30;
+          const padT = 15;
+          const padB = 30;
+          const plotW = svgW - padL - padR;
+          const plotH = svgH - padT - padB;
+
+          let gridSvg = '';
+          [1.0, 0.75, 0.50, 0.25, 0.0].forEach(val => {
+            const y = padT + plotH * (1.0 - val);
+            gridSvg += `<line x1="${padL}" y1="${y}" x2="${svgW - padR}" y2="${y}" stroke="var(--border-subtle)" stroke-dasharray="3,3" stroke-width="1" />`;
+            gridSvg += `<text x="${padL - 8}" y="${y + 3}" text-anchor="end" font-size="10" fill="var(--text-tertiary)" font-family="var(--font-mono)">${Math.round(val * 100)}%</text>`;
+          });
+
+          const metrics = [
+            { key: 'faithfulness', color: 'var(--status-emerald-text)' },
+            { key: 'answer_relevancy', color: 'var(--accent-indigo)' },
+            { key: 'context_precision', color: 'var(--status-blue-text)' },
+            { key: 'context_recall', color: 'var(--status-purple-text)' }
+          ];
+
+          let pathsSvg = '';
+          metrics.forEach(m => {
+            const pts = runsReversed.map((r, i) => {
+              const x = padL + (i * plotW / (runsReversed.length - 1 || 1));
+              const val = r.summary_metrics?.[m.key] || 0;
+              const y = padT + plotH * (1.0 - Math.min(1.0, Math.max(0.0, val)));
+              return { x, y, val, runId: r.run_id };
+            });
+
+            const pointsAttr = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+            pathsSvg += `<polyline fill="none" stroke="${m.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${pointsAttr}" />`;
+            pts.forEach(p => {
+              pathsSvg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="var(--bg-surface)" stroke="${m.color}" stroke-width="2"><title>${m.key}: ${(p.val * 100).toFixed(1)}% (${p.runId})</title></circle>`;
+            });
+          });
+
+          let xLabelsSvg = '';
+          runsReversed.forEach((r, i) => {
+            const x = padL + (i * plotW / (runsReversed.length - 1 || 1));
+            const shortName = r.config_name ? r.config_name.replace('Config_', '') : `Run ${i+1}`;
+            xLabelsSvg += `<text x="${x.toFixed(1)}" y="${svgH - 8}" text-anchor="middle" font-size="10.5" fill="var(--text-muted)" font-family="var(--font-mono)">${shortName}</text>`;
+          });
+
+          chartBox.innerHTML = `
+            <svg viewBox="0 0 ${svgW} ${svgH}" style="width: 100%; height: auto; min-width: 580px; display: block; overflow: visible;">
+              ${gridSvg}
+              ${pathsSvg}
+              ${xLabelsSvg}
+            </svg>
+          `;
+        }
+
         tbody.innerHTML = data.runs.map(r => `
           <tr>
             <td style="font-family: var(--font-mono); font-size: 11px;"><b style="color: var(--text-primary);">${r.run_id}</b><br><span style="color: var(--text-tertiary);">${new Date(r.timestamp).toLocaleString()}</span></td>
@@ -2186,6 +2490,10 @@
 
     // Initial boot
     window.addEventListener('DOMContentLoaded', () => {
+      // Synchronize theme UI with current active theme
+      const activeTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      updateThemeUI(activeTheme);
+
       // Check if URL has tab hash e.g. #queries
       const hash = window.location.hash.replace('#', '');
       if (hash && ['documents', 'search', 'ask', 'queries', 'evaluation', 'reliability', 'overview', 'settings'].includes(hash)) {
