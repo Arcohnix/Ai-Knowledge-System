@@ -11,7 +11,42 @@ An enterprise-grade, internal knowledge assistant engineered to answer questions
 
 ---
 
-## 1. Project Overview
+## Quickstart
+
+### Prerequisites
+- Docker & Docker Compose v2+
+- (Optional for local generation) [Ollama](https://ollama.ai/) running locally with `ollama pull llama3:latest`
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/Arcohnix/Ai-Knowledge-System.git
+cd Ai-Knowledge-System
+```
+
+### 2. Configure the environment
+Create your `.env` configuration file:
+```bash
+cp .env.example .env
+```
+
+### 3. Start the services
+```bash
+docker compose up -d --build
+```
+
+Check that the containers are healthy:
+```bash
+docker compose ps
+```
+
+### 4. Open the application
+- **Admin dashboard**: [http://localhost:8001/dashboard](http://localhost:8001/dashboard)
+- **Interactive API docs**: [http://localhost:8001/docs](http://localhost:8001/docs)
+- **Health report**: [http://localhost:8001/api/v1/health](http://localhost:8001/api/v1/health)
+
+---
+
+## Project Overview
 
 The **AI Knowledge System** is not a generic chatbot or a basic "chat with PDF" wrapper. It is a production-hardened knowledge platform built for corporate environments where incorrect answers carry operational, compliance, or financial risk.
 
@@ -25,7 +60,7 @@ The system features:
 
 ---
 
-## 2. Problem Statement
+## Problem Statement
 
 Enterprise internal knowledge bases suffer from three critical problems:
 1. **Unconstrained Hallucination**: Off-the-shelf LLMs generate plausible answers even when no relevant documents exist in the enterprise corpus.
@@ -34,7 +69,7 @@ Enterprise internal knowledge bases suffer from three critical problems:
 
 ---
 
-## 3. Why Normal RAG Is Insufficient
+## Why Normal RAG Is Insufficient
 
 Standard naive RAG pipelines execute a simple 3-step loop:
 
@@ -51,7 +86,7 @@ In production, naive RAG fails in four predictable ways:
 
 ---
 
-## 4. System Architecture
+## System Architecture
 
 ```mermaid
 flowchart TD
@@ -92,7 +127,7 @@ flowchart TD
 
 ---
 
-## 5. End-to-End Data Flow
+## End-to-End Data Flow
 
 ```mermaid
 sequenceDiagram
@@ -136,7 +171,7 @@ sequenceDiagram
 
 ---
 
-## 6. Technology Stack
+## Technology Stack
 
 - **Backend**: Python 3.11, FastAPI, Pydantic v2, SQLAlchemy 2.0 (AsyncIO), Alembic.
 - **Database & Vectors**: PostgreSQL 16 with `pgvector` extension and HNSW indexing.
@@ -149,48 +184,7 @@ sequenceDiagram
 
 ---
 
-## 7. Installation & Quickstart
-
-### Prerequisites
-- Docker & Docker Compose v2+
-- (Optional for local generation) [Ollama](https://ollama.ai/) running locally with `ollama pull llama3:latest`
-
-### Step 1: Clone Repository
-```bash
-git clone https://github.com/your-username/AiKnowledgeSystem.git
-cd AiKnowledgeSystem
-```
-
-### Step 2: Environment Configuration
-Create your `.env` configuration file:
-```bash
-cp .env.example .env
-```
-
-### Step 3: Start Services via Docker Compose
-```bash
-docker compose up -d --build
-```
-
-Verify service status:
-```bash
-docker compose ps
-```
-Output:
-```
-NAME                   IMAGE                       COMMAND                  STATUS                       PORTS
-ai_knowledge_backend   aiknowledgesystem-backend   "docker/entrypoint.s…"   Up (healthy)                 0.0.0.0:8001->8000/tcp
-ai_knowledge_db        pgvector/pgvector:pg16      "docker-entrypoint.s…"   Up (healthy)                 0.0.0.0:5433->5432/tcp
-```
-
-### Step 4: Access System Endpoints
-- **Admin Control Plane**: [http://localhost:8001/dashboard](http://localhost:8001/dashboard)
-- **Interactive Swagger Docs**: [http://localhost:8001/docs](http://localhost:8001/docs)
-- **System Health Report**: [http://localhost:8001/api/v1/health](http://localhost:8001/api/v1/health)
-
----
-
-## 8. Configuration & Environment Variables
+## Configuration & Environment Variables
 
 | Variable | Default | Description |
 | :--- | :--- | :--- |
@@ -217,7 +211,7 @@ ai_knowledge_db        pgvector/pgvector:pg16      "docker-entrypoint.s…"   Up
 
 ---
 
-## 9. API Reference
+## API Reference
 
 ### Document Ingestion (`POST /api/v1/documents`)
 Uploads, sanitizes, chunks, embeds, and indexes a document with lifecycle metadata:
@@ -289,7 +283,7 @@ curl -X POST http://localhost:8001/api/v1/ask \
 
 ---
 
-## 10. Evaluation Methodology & Ragas Metrics
+## Evaluation Methodology & Ragas Metrics
 
 The system includes a reproducible offline benchmarking suite in `evaluation/`:
 ```bash
@@ -314,7 +308,7 @@ docker compose exec backend python -m evaluation.run --config config_b_topk_5
 
 ---
 
-## 11. Hallucination Prevention & Refusal Behavior
+## Hallucination Prevention & Refusal Behavior
 
 The system incorporates two explicit gates to prevent plausible fabrications:
 1. **Pre-Generation Evidence Gating**:
@@ -333,7 +327,7 @@ The system incorporates two explicit gates to prevent plausible fabrications:
 
 ---
 
-## 12. Contradiction & Version Handling
+## Contradiction & Version Handling
 
 Enterprise documentation frequently contains conflicting policies. `ContradictionService` performs pairwise semantic analysis across chunks:
 1. **Discrepancy Detection**: Identifies numeric differences (e.g. 20 vs 25 days), polarity mismatches (required vs optional), and schedule divergence.
@@ -359,7 +353,7 @@ Enterprise documentation frequently contains conflicting policies. `Contradictio
 
 ---
 
-## 13. Example Query Archetypes
+## Example Query Archetypes
 
 | Query Archetype | Question Example | System Behavior |
 | :--- | :--- | :--- |
@@ -371,7 +365,7 @@ Enterprise documentation frequently contains conflicting policies. `Contradictio
 
 ---
 
-## 14. Automated Test Suite
+## Automated Test Suite
 
 The system includes 147 unit, integration, adversarial, contradiction, admin, and evaluation tests:
 
@@ -394,7 +388,7 @@ Test categories:
 
 ---
 
-## 15. Architectural Decisions
+## Architectural Decisions
 
 Detailed design trade-offs and rationale are documented in [docs/ARCHITECTURE_DECISIONS.md](docs/ARCHITECTURE_DECISIONS.md):
 - **ADR-001**: PostgreSQL + pgvector with HNSW Indexing over External Dedicated Vector DBs.
@@ -406,7 +400,7 @@ Detailed design trade-offs and rationale are documented in [docs/ARCHITECTURE_DE
 
 ---
 
-## 16. Limitations
+## Limitations
 
 - **OCR for Scanned Documents**: Current PDF parser processes native digital text layers. Scanned bitmap PDFs require integration with an OCR engine (e.g. Tesseract or AWS Textract).
 - **Tabular Cross-Cell Reasoning**: Complex nested multi-page tables are chunked into Markdown text. Deep numeric table calculations benefit from dedicated table-to-SQL agents.
@@ -414,7 +408,7 @@ Detailed design trade-offs and rationale are documented in [docs/ARCHITECTURE_DE
 
 ---
 
-## 17. Future Improvements
+## Future Improvements
 
 1. **Hybrid Sparse-Dense Retrieval**: Combining BM25 / Splade lexical scoring with pgvector dense cosine search via Reciprocal Rank Fusion (RRF).
 2. **Cross-Encoder Re-Ranking**: Adding a BGE-Reranker cross-encoder stage prior to context assembly to optimize top-3 chunk precision.
