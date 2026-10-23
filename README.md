@@ -426,5 +426,3 @@ Detailed design trade-offs and rationale are documented in [docs/ARCHITECTURE_DE
 ## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
-
-# Ai-Knowledge-System
